@@ -1,11 +1,1 @@
-{
-  "framework": "nextjs",
-  "buildCommand": "next build",
-  "devCommand": "next dev",
-  "installCommand": "npm install",
-  "regions": ["bom1"],
-  "env": {
-    "NEXT_PUBLIC_SUPABASE_URL": "@rasoi-supabase-url",
-    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "@rasoi-supabase-anon-key"
-  }
-}
+{"version":2}
