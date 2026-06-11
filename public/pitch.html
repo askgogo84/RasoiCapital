@@ -82,8 +82,8 @@ h2{font-size:clamp(26px,6.4vw,34px)}
 
 /* ── market ── */
 #market{background:var(--mist)}
-.bars{display:flex;align-items:flex-end;gap:9px;height:170px;margin-top:26px}
-.bcol{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:6px}
+.bars{display:flex;gap:9px;height:170px;margin-top:26px}
+.bcol{flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:6px}
 .bcol .b{width:100%;border-radius:8px 8px 3px 3px;background:linear-gradient(180deg,#FF7A33,var(--tandoor));height:0;transition:height 1s cubic-bezier(.2,.7,.2,1)}
 .bcol .v{font-size:12px;font-weight:800}.bcol .y{font-size:11px;color:var(--faint)}
 .srcnote{font-size:11.5px;color:var(--faint);font-style:italic;margin-top:10px}
@@ -596,10 +596,10 @@ const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.targ
 document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
 
 // ── animated bars (market / factors / funds) ──
-function arm(sel,attr,prop){const els=document.querySelectorAll(sel);const o=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.style[prop]=e.target.dataset[attr];o.unobserve(e.target)}}),{threshold:.4});els.forEach(el=>o.observe(el));}
-arm('#mbars .b','h','height');
-arm('#factors .fl2','w','width');
-arm('#fund .fl3','w','width');
+function arm(contSel,childSel,attr,prop){const cont=document.querySelector(contSel);if(!cont)return;const fire=()=>cont.querySelectorAll(childSel).forEach(el=>el.style[prop]=el.dataset[attr]);const o=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){fire();o.disconnect()}}),{threshold:.15});o.observe(cont);setTimeout(()=>{const r=cont.getBoundingClientRect();if(r.top<innerHeight&&r.bottom>0){fire();o.disconnect()}},600);}
+arm('#mbars','.b','h','height');
+arm('#factors','.fl2','w','width');
+arm('#fund','.fl3','w','width');
 
 // ── THE 9PM TILL (signature) ──
 (function(){
