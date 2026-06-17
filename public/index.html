@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Rasoi Capital — Investor Pitch · AI Lending for India's Kitchens</title>
+<meta name="description" content="The AI-first lending platform for India's ₹5.7 lakh crore HORECA industry. Raising ₹50 Cr. Live demo inside.">
+<meta property="og:title" content="Rasoi Capital — India feeds the world. Nobody funds the kitchen.">
+<meta property="og:description" content="AI underwriting for HORECA · Daily EMI at 9 PM · Live demo · Raising ₹50 Cr">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,640;9..144,720&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#10182B; --slate:#4A5670; --faint:#8E99B0;
+  --paper:#FFFFFF; --cream:#FBF6EF; --mist:#F2F5F9;
+  --tandoor:#E8520A; --ember:#FFF1E6; --ember2:#FFE0CB;
+  --teal:#0E756C; --violet:#6B2BD9; --green:#177A3D; --red:#B92121; --gold:#A66A0A;
+  --maxw:680px;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:var(--paper);overflow-x:hidden}
+.disp{font-family:"Fraunces",Georgia,serif;font-weight:640;letter-spacing:-.015em;line-height:1.12}
+.num{font-variant-numeric:tabular-nums}
+section{padding:64px 20px;position:relative}
+.wrap{max-width:var(--maxw);margin:0 auto}
+.eyebrow{font-size:11px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--tandoor);margin-bottom:14px}
+.eyebrow.t{color:var(--teal)}.eyebrow.v{color:var(--violet)}
+h2{font-size:clamp(26px,6.4vw,34px)}
+.lead{color:var(--slate);font-size:15.5px;margin-top:12px}
+.card{background:var(--paper);border:1px solid #E7ECF3;border-radius:16px;padding:20px;box-shadow:0 4px 18px rgba(16,24,43,.05)}
+.reveal{opacity:0;transform:translateY(22px);transition:opacity .6s ease,transform .6s ease}
+.reveal.in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}}
+
+/* ── sticky bar ── */
+#bar{position:fixed;top:0;left:0;right:0;z-index:50;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-bottom:1px solid #EDF0F5}
+#bar .in{max-width:var(--maxw);margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:10px 20px}
+#brand{font-family:"Fraunces",serif;font-weight:720;font-size:16px;color:var(--ink);text-decoration:none}
+#brand b{color:var(--tandoor);font-weight:720}
+#bar a.cta{background:var(--tandoor);color:#fff;font-size:12.5px;font-weight:700;padding:8px 14px;border-radius:99px;text-decoration:none}
+#prog{position:absolute;bottom:-1px;left:0;height:2.5px;background:var(--tandoor);width:0%}
+
+/* ── hero ── */
+#hero{background:linear-gradient(180deg,var(--cream),#fff 88%);padding:108px 20px 56px;border-bottom:1px solid #F0EAE0}
+#hero h1{font-size:clamp(34px,9.4vw,54px)}
+#hero h1 .or{color:var(--tandoor)}
+#hero .sub{color:var(--slate);margin:16px 0 24px;font-size:15.5px;max-width:540px}
+.askgrid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:#ECE4D8;border:1px solid #ECE4D8;border-radius:16px;overflow:hidden}
+.askgrid>div{background:#fff;padding:14px 16px}
+.askgrid .l{font-size:10px;font-weight:700;letter-spacing:.18em;color:var(--faint);text-transform:uppercase}
+.askgrid .v{font-size:16.5px;font-weight:800;margin-top:3px}
+.heroctas{display:flex;gap:10px;margin-top:22px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:8px;font-weight:700;font-size:14px;padding:13px 20px;border-radius:99px;text-decoration:none;transition:transform .15s ease}
+.btn:active{transform:scale(.97)}
+.btn.fill{background:var(--tandoor);color:#fff;box-shadow:0 8px 22px rgba(232,82,10,.32)}
+.btn.line{border:1.5px solid #D8DEE8;color:var(--ink);background:#fff}
+
+/* ── proof chips ── */
+.chips{display:grid;gap:12px;margin-top:24px}
+.chip{display:flex;gap:14px;align-items:flex-start}
+.chip .tag{flex:none;font-size:10px;font-weight:800;letter-spacing:.08em;padding:4px 9px;border-radius:6px;margin-top:2px}
+.tag.live{background:#E6F6EC;color:var(--green)}.tag.draft{background:#FBF1DC;color:var(--gold)}
+.chip h3{font-size:15.5px}.chip p{font-size:13.5px;color:var(--slate);margin-top:3px}
+.chip a{color:var(--tandoor);font-weight:700;text-decoration:none;font-size:13px}
+
+/* ── problem ── */
+#problem{background:#fff}
+.fail{display:flex;gap:14px;margin-top:22px}
+.fail .n{font-family:"Fraunces",serif;font-weight:720;font-size:26px;color:#DCE3EE;flex:none;width:38px}
+.fail h3{font-size:15.5px}.fail p{font-size:13.5px;color:var(--slate);margin-top:4px}
+.lender{margin-top:28px;background:var(--cream);border:1px solid #EFE6D8;border-radius:18px;padding:24px 22px}
+.lender .big{font-family:"Fraunces",serif;font-weight:720;font-size:clamp(44px,13vw,64px);color:var(--red);line-height:1}
+.lender .cap{color:var(--slate);font-size:14px;margin-top:6px}
+.lstats{margin-top:18px;border-top:1px solid #ECE2D2;padding-top:6px}
+.lstat{display:flex;gap:14px;align-items:baseline;padding:9px 0}
+.lstat b{font-size:19px;flex:none;width:78px}
+.lstat span{font-size:12.5px;color:var(--slate)}
+
+/* ── market ── */
+#market{background:var(--mist)}
+.bars{display:flex;gap:9px;height:170px;margin-top:26px}
+.bcol{flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:6px}
+.bcol .b{width:100%;border-radius:8px 8px 3px 3px;background:linear-gradient(180deg,#FF7A33,var(--tandoor));height:0;transition:height 1s cubic-bezier(.2,.7,.2,1)}
+.bcol .v{font-size:12px;font-weight:800}.bcol .y{font-size:11px;color:var(--faint)}
+.srcnote{font-size:11.5px;color:var(--faint);font-style:italic;margin-top:10px}
+.funnel{display:grid;gap:10px;margin-top:26px}
+.fstep{border-radius:14px;padding:16px 18px}
+.fstep .fl{font-size:10.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
+.fstep .fv{font-family:"Fraunces",serif;font-weight:720;font-size:24px;margin-top:2px}
+.fstep p{font-size:12.5px;margin-top:4px}
+.f1{background:var(--ember)}.f1 .fl{color:var(--gold)}.f1 p{color:var(--slate)}
+.f2{background:var(--ember2);width:88%}.f2 .fl{color:#8A4A05}.f2 p{color:#5d4a3a}
+.f3{background:var(--tandoor);color:#fff;width:72%}.f3 .fl{color:#FFD9BF}.f3 p{color:#FFE6D6}
+
+/* ── pillars ── */
+.pillars{display:grid;gap:14px;margin-top:24px}
+.pillar{border-top:4px solid;border-radius:16px;background:#fff;border:1px solid #E7ECF3;border-top-width:4px;padding:18px}
+.pillar h3{font-size:16.5px;margin:8px 0 10px}
+.pillar li{font-size:13.5px;color:var(--slate);margin:8px 0 8px 16px}
+.pillar .ico{font-size:24px}
+.p1{border-top-color:var(--violet)}.p2{border-top-color:var(--tandoor)}.p3{border-top-color:var(--teal)}
+
+/* ── engine ── */
+.factors{margin-top:24px;display:grid;gap:13px}
+.factor .fr{display:flex;justify-content:space-between;align-items:baseline}
+.factor .fn{font-size:13.5px;font-weight:700}
+.factor .fw{font-size:13px;font-weight:800}
+.factor .tr{height:9px;background:var(--mist);border-radius:6px;margin-top:6px;overflow:hidden}
+.factor .fl2{height:100%;border-radius:6px;width:0;transition:width .9s cubic-bezier(.2,.7,.2,1)}
+.factor .fs{font-size:11.5px;color:var(--faint);margin-top:4px}
+.outcome{margin-top:22px;background:#F6F2FF;border:1px solid #E4DAFB;border-radius:14px;padding:14px 16px;font-size:13px}
+.outcome b.g{color:var(--green)}.outcome b.c{color:var(--gold)}.outcome b.p{color:var(--red)}.outcome b.v{color:var(--violet)}
+
+/* ── demo ── */
+#demo{background:var(--ember)}
+.pulse{display:inline-flex;align-items:center;gap:8px;background:var(--tandoor);color:#fff;font-size:12px;font-weight:800;letter-spacing:.06em;padding:7px 14px;border-radius:99px}
+.pulse i{width:8px;height:8px;border-radius:50%;background:#fff;animation:pp 1.6s infinite}
+@keyframes pp{0%,100%{opacity:1}50%{opacity:.25}}
+@media (prefers-reduced-motion:reduce){.pulse i{animation:none}}
+.duo{display:grid;gap:14px;margin-top:22px}
+.io{border-radius:16px;padding:18px}
+.io .h{font-size:10.5px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;margin-bottom:12px}
+.io .row{display:flex;justify-content:space-between;gap:12px;padding:7px 0;font-size:13.5px;border-bottom:1px dashed rgba(120,130,150,.18)}
+.io .row:last-child{border:none}
+.io .row span{color:var(--slate)}.io .row b{text-align:right}
+.io.in2{background:#fff;border:1px solid #F0E2D4}.io.in2 .h{color:var(--faint)}
+.io.out{background:var(--ink);color:#fff}.io.out .h{color:#FDBA8C}
+.io.out .row span{color:#9AA5BC}.io.out .row b{color:#fff}
+.io.out .row b.c{color:#FCD34D}.io.out .row b.a{color:#FDBA8C}.io.out .row b.v{color:#C4B5FD}
+.demobtn{margin-top:20px;text-align:center}
+.demobtn .btn{width:100%;justify-content:center;font-size:15px}
+.demobtn p{font-size:12px;color:var(--slate);margin-top:10px;font-style:italic}
+
+/* ── till (signature) ── */
+#till{background:#fff}
+.tillbox{margin-top:24px;background:linear-gradient(180deg,#FFFDFa,var(--cream));border:1px solid #EFE6D8;border-radius:20px;padding:22px 18px}
+#curve{width:100%;height:auto;display:block}
+.tillread{display:flex;justify-content:space-between;align-items:center;margin-top:10px}
+.tillread .tm{font-family:"Fraunces",serif;font-weight:720;font-size:clamp(20px,5.8vw,28px);white-space:nowrap}
+.tillread .st{text-align:right;max-width:62%}
+.tillread .st b{display:block;font-size:15px}
+.tillread .st span{font-size:11.5px;color:var(--slate)}
+input[type=range].scrub{width:100%;margin-top:14px;-webkit-appearance:none;appearance:none;height:34px;background:transparent}
+input[type=range].scrub::-webkit-slider-runnable-track{height:8px;border-radius:6px;background:linear-gradient(90deg,#E9EDF4,#E9EDF4)}
+input[type=range].scrub::-webkit-slider-thumb{-webkit-appearance:none;width:30px;height:30px;border-radius:50%;background:var(--tandoor);border:4px solid #fff;box-shadow:0 3px 12px rgba(232,82,10,.45);margin-top:-11px}
+input[type=range].scrub::-moz-range-track{height:8px;border-radius:6px;background:#E9EDF4}
+input[type=range].scrub::-moz-range-thumb{width:26px;height:26px;border-radius:50%;background:var(--tandoor);border:4px solid #fff;box-shadow:0 3px 12px rgba(232,82,10,.45)}
+.tillhint{font-size:12px;color:var(--faint);text-align:center;margin-top:6px}
+.mech{display:grid;gap:14px;margin-top:26px}
+.mrow{display:flex;gap:12px}
+.mrow .d{flex:none;width:26px;height:26px;border-radius:50%;background:var(--tandoor);color:#fff;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;margin-top:2px}
+.mrow h4{font-size:14.5px}.mrow p{font-size:13px;color:var(--slate);margin-top:3px}
+
+/* ── ladder ── */
+#ladder{background:var(--mist)}
+.rung{display:flex;gap:0;border-radius:13px;overflow:hidden;background:#fff;border:1px solid #E7ECF3;margin-top:11px}
+.rung .stripe{width:6px;flex:none}
+.rung .body{padding:13px 15px}
+.rung .bk{font-size:10px;font-weight:800;letter-spacing:.12em}
+.rung h4{font-size:14.5px;margin:1px 0 2px}
+.rung p{font-size:12.5px;color:var(--slate)}
+
+/* ── compete ── */
+.tblwrap{margin-top:22px;overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:14px;border:1px solid #E7ECF3}
+table{border-collapse:collapse;min-width:760px;width:100%;font-size:12.5px;background:#fff}
+th,td{padding:11px 12px;text-align:center;border-bottom:1px solid #EFF2F7;white-space:nowrap}
+th{background:var(--ink);color:#fff;font-size:11.5px}
+th:first-child,td:first-child{text-align:left;position:sticky;left:0;background:#fff;font-weight:700;box-shadow:2px 0 0 #EFF2F7}
+th:first-child{background:var(--ink)}
+tr:nth-child(even) td{background:#FAFBFD}
+tr:nth-child(even) td:first-child{background:#FAFBFD}
+td.x{color:#C2CAD8}
+td.us{background:var(--ember)!important;color:var(--green);font-weight:800;border-left:2px solid var(--tandoor);border-right:2px solid var(--tandoor)}
+th.us{background:#23120A;color:#FDBA8C;border-left:2px solid var(--tandoor);border-right:2px solid var(--tandoor)}
+td.part{color:var(--gold);font-weight:700}
+.swipehint{font-size:11.5px;color:var(--faint);text-align:center;margin-top:8px}
+
+/* ── flywheel ── */
+#moat{background:var(--cream)}
+.wheel{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:24px}
+.wnode{background:#fff;border:1.6px solid;border-radius:14px;padding:14px}
+.wnode h4{font-size:13.5px}.wnode p{font-size:11.8px;color:var(--slate);margin-top:4px}
+.w1{border-color:var(--tandoor)}.w1 h4{color:var(--tandoor)}
+.w2{border-color:var(--teal)}.w2 h4{color:var(--teal)}
+.w3{border-color:var(--violet)}.w3 h4{color:var(--violet)}
+.w4{border-color:var(--green)}.w4 h4{color:var(--green)}
+.bigstats{display:grid;gap:18px;margin-top:28px}
+.bstat .bn{font-family:"Fraunces",serif;font-weight:720;font-size:34px;color:var(--violet)}
+.bstat p{font-size:13px;color:var(--slate);margin-top:2px}
+
+/* ── econ ── */
+.ledger{margin-top:22px;display:grid;gap:8px}
+.lrow{display:flex;justify-content:space-between;align-items:center;border-radius:11px;padding:12px 16px;font-size:14px}
+.lrow.plus{background:#EFFAF2}.lrow.minus{background:#FDF1F1}
+.lrow b.g{color:var(--green)}.lrow b.r{color:var(--red)}
+.lrow.net{background:var(--ink);color:#fff;font-weight:700;padding:15px 16px}
+.lrow.net b{color:#4ADE80;font-size:18px}
+.cycles{display:grid;gap:11px;margin-top:24px}
+.cyc{border:1.5px solid var(--tandoor);background:var(--ember);border-radius:14px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.cyc .cl{font-size:10px;font-weight:800;letter-spacing:.12em;color:var(--tandoor)}
+.cyc .ca{font-family:"Fraunces",serif;font-weight:720;font-size:21px}
+.cyc p{font-size:12px;color:var(--slate);text-align:right;max-width:55%}
+
+/* ── nbfc ── */
+#nbfc{background:var(--mist)}
+.paths{display:grid;gap:14px;margin-top:24px}
+.path{background:#fff;border:1px solid #E7ECF3;border-radius:16px;padding:18px}
+.path .ph{display:flex;justify-content:space-between;align-items:center}
+.path .ptag{font-size:10.5px;font-weight:800;color:#fff;padding:5px 11px;border-radius:7px}
+.path .pt{font-size:12px;font-weight:800}
+.path h3{font-size:16.5px;margin:10px 0 8px}
+.path li{font-size:13px;color:var(--slate);margin:7px 0 7px 16px}
+.path .win{margin-top:12px;border-radius:9px;padding:8px 12px;font-size:12px;font-weight:700}
+.pa .ptag{background:var(--tandoor)}.pa .pt{color:var(--tandoor)}.pa .win{background:var(--ember);color:var(--tandoor)}
+.pb .ptag{background:var(--teal)}.pb .pt{color:var(--teal)}.pb .win{background:#EBF7F5;color:var(--teal)}
+.parallel{margin-top:14px;background:#FBF3DC;border-radius:11px;padding:12px 15px;font-size:12.5px;font-weight:600;color:var(--gold)}
+
+/* ── funds ── */
+.fund{margin-top:20px;display:grid;gap:16px}
+.frow .fh{display:flex;justify-content:space-between;align-items:baseline}
+.frow .fh b{font-size:14px}
+.frow .fh span{font-size:12.5px;font-weight:800}
+.frow .tr2{height:11px;background:var(--mist);border-radius:7px;margin-top:7px;overflow:hidden}
+.frow .fl3{height:100%;border-radius:7px;width:0;transition:width .9s cubic-bezier(.2,.7,.2,1)}
+.frow p{font-size:12px;color:var(--slate);margin-top:5px}
+.greenline{margin-top:22px;background:#EFFAF2;border:1px solid #CDEBD6;border-radius:12px;padding:13px 16px;font-size:13px;font-weight:700;color:var(--green)}
+
+/* ── road ── */
+#road{background:var(--cream)}
+.roadscroll{display:flex;gap:12px;overflow-x:auto;-webkit-overflow-scrolling:touch;margin-top:24px;padding-bottom:8px;scroll-snap-type:x mandatory}
+.rcard{flex:none;width:236px;scroll-snap-align:start;background:#fff;border:1px solid #EDE5D8;border-radius:16px;padding:16px;border-top:5px solid}
+.rcard .rt{font-size:10.5px;font-weight:800;letter-spacing:.12em}
+.rcard h3{font-size:15.5px;margin:3px 0 9px}
+.rcard li{font-size:12.5px;color:var(--slate);margin:7px 0 7px 15px}
+.rcard .kpi{margin-top:12px;font-size:11px;font-weight:800;border:1px solid;border-radius:8px;padding:6px 9px;text-align:center}
+.r1{border-top-color:var(--tandoor)}.r1 .rt,.r1 .kpi{color:var(--tandoor);border-color:var(--tandoor)}
+.r2{border-top-color:var(--gold)}.r2 .rt,.r2 .kpi{color:var(--gold);border-color:var(--gold)}
+.r3{border-top-color:var(--teal)}.r3 .rt,.r3 .kpi{color:var(--teal);border-color:var(--teal)}
+.r4{border-top-color:var(--green)}.r4 .rt,.r4 .kpi{color:var(--green);border-color:var(--green)}
+
+/* ── close ── */
+#close{background:linear-gradient(180deg,#fff,var(--cream));padding-bottom:90px}
+#close h2.disp{font-size:clamp(28px,7.6vw,40px)}
+#close h2 .or{color:var(--tandoor)}
+.checks{display:grid;gap:16px;margin-top:26px}
+.check{display:flex;gap:11px}
+.check .tick{color:var(--green);font-weight:800;font-size:17px;flex:none}
+.check h4{font-size:14.5px}.check p{font-size:12.8px;color:var(--slate);margin-top:2px}
+.finalcta{margin-top:30px;background:var(--ink);border-radius:18px;padding:20px;text-align:center}
+.finalcta p{color:#9AA5BC;font-size:13px}
+.finalcta a{display:block;color:#FDBA8C;font-weight:800;font-size:16px;text-decoration:none;margin-top:6px;word-break:break-all}
+.team{margin-top:26px;text-align:center;font-size:12.5px;color:var(--faint);line-height:1.9}
+footer{padding:20px;text-align:center;font-size:11px;color:var(--faint);border-top:1px solid #EFF0F3}
+
+@media(min-width:640px){
+  .duo{grid-template-columns:1fr 1fr}
+  .pillars{grid-template-columns:repeat(3,1fr)}
+  .paths{grid-template-columns:1fr 1fr}
+  .chips{grid-template-columns:repeat(3,1fr)}
+  .chip{flex-direction:column}
+  .checks{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<nav id="bar"><div class="in">
+  <a id="brand" href="#hero">Rasoi <b>Capital</b></a>
+  <a class="cta" href="https://rasoi-capital.vercel.app/underwrite">Try the live demo</a>
+  <div id="prog"></div>
+</div></nav>
+
+<!-- HERO -->
+<section id="hero"><div class="wrap">
+  <div class="eyebrow">Investor pitch · Seed / Pre-Series A</div>
+  <h1 class="disp">India feeds the world. <span class="or">Nobody funds the kitchen.</span></h1>
+  <p class="sub">The AI-first lending platform for India's ₹5.7&nbsp;lakh&nbsp;crore HORECA industry — built on a live, working underwriting engine you can test before you finish this page.</p>
+  <div class="askgrid reveal">
+    <div><div class="l">Raising</div><div class="v" style="color:var(--tandoor)">₹50 Cr</div></div>
+    <div><div class="l">Includes</div><div class="v">NBFC Licence + NOF</div></div>
+    <div><div class="l">Product status</div><div class="v" style="color:var(--green)">Live &amp; demo-ready</div></div>
+    <div><div class="l">Use of funds</div><div class="v">~80% → assets</div></div>
+  </div>
+  <div class="heroctas">
+    <a class="btn fill" href="https://rasoi-capital.vercel.app/underwrite">🎯 Underwrite a restaurant now</a>
+    <a class="btn line" href="#problem">Read the pitch ↓</a>
+    <a class="btn line" href="/RasoiCapital_PitchDeck.pptx" download="RasoiCapital_PitchDeck.pptx">⬇ Download deck</a>
+  </div>
+</div></section>
+
+<!-- PROOF -->
+<section><div class="wrap">
+  <div class="eyebrow">Before we begin</div>
+  <h2 class="disp">This is not a concept page.</h2>
+  <p class="lead">Everything below is running in production right now. Open it in another tab while you read.</p>
+  <div class="chips">
+    <div class="chip reveal"><span class="tag live">LIVE</span><div><h3>AI underwriting engine</h3><p>6-factor HORECA model scores any outlet in under a second, with a full AI risk memo.</p><a href="https://rasoi-capital.vercel.app/underwrite">/underwrite →</a></div></div>
+    <div class="chip reveal"><span class="tag live">LIVE</span><div><h3>Full lending platform</h3><p>Applications, loan book, daily-EMI collections, DPD buckets, analytics. 17-table production DB.</p><a href="https://rasoi-capital.vercel.app">rasoi-capital.vercel.app →</a></div></div>
+    <div class="chip reveal"><span class="tag draft">BOARD-READY</span><div><h3>RBI-aligned policy stack</h3><p>Credit policy, collection &amp; recovery policy (Fair Practices Code), bureau framework — written and reviewed.</p><a href="#nbfc">In the data room</a></div></div>
+  </div>
+</div></section>
+
+<!-- PROBLEM -->
+<section id="problem"><div class="wrap">
+  <div class="eyebrow">The problem</div>
+  <h2 class="disp">Kitchens run on credit nobody gives them.</h2>
+  <p class="lead">A restaurant earning ₹7 lakh a month — daily cash flow, real customers, real margins — walks into a bank and gets rejected. Why?</p>
+  <div class="fail reveal"><div class="n">01</div><div><h3>ITR can't see daily cash</h3><p>30–40% of HORECA revenue is cash &amp; UPI that annual filings under-report. Banks score the paperwork, not the business.</p></div></div>
+  <div class="fail reveal"><div class="n">02</div><div><h3>Generic SME models misfire</h3><p>A dhaba and a steel trader get the same scorecard. Margin structures, seasonality, footfall — all invisible to NBFC models.</p></div></div>
+  <div class="fail reveal"><div class="n">03</div><div><h3>Monthly EMI vs daily income</h3><p>HORECA earns daily but repays monthly — one bad week breaks the EMI. Product design itself manufactures defaults.</p></div></div>
+  <div class="lender reveal">
+    <div class="eyebrow" style="color:var(--gold)">So where do they go?</div>
+    <div class="big num" data-count="48" data-prefix="36–" data-suffix="%">36–48%</div>
+    <div class="cap">p.a. — informal moneylenders, the default banker of Indian HORECA.</div>
+    <div class="lstats">
+      <div class="lstat"><b class="num">8.5M+</b><span>people employed — India's 2nd-largest employer (NRAI)</span></div>
+      <div class="lstat"><b class="num">~70%</b><span>of outlets remain outside formal credit (industry est.)</span></div>
+      <div class="lstat"><b class="num">1.9%</b><span>of GDP — yet no dedicated HORECA lender exists</span></div>
+    </div>
+  </div>
+</div></section>
+
+<!-- MARKET -->
+<section id="market"><div class="wrap">
+  <div class="eyebrow">The market</div>
+  <h2 class="disp">3rd-largest food market on Earth by 2028.</h2>
+  <div class="bars" id="mbars">
+    <div class="bcol"><span class="v num">5.69</span><div class="b" data-h="62%"></div><span class="y">FY24</span></div>
+    <div class="bcol"><span class="v num">6.15</span><div class="b" data-h="68%"></div><span class="y">FY25</span></div>
+    <div class="bcol"><span class="v num">6.65</span><div class="b" data-h="74%"></div><span class="y">FY26</span></div>
+    <div class="bcol"><span class="v num">7.19</span><div class="b" data-h="82%"></div><span class="y">FY27</span></div>
+    <div class="bcol"><span class="v num">7.77</span><div class="b" data-h="92%"></div><span class="y">FY28</span></div>
+  </div>
+  <p class="srcnote">Indian food services industry, ₹ lakh crore · NRAI IFSR 2024 · 8.1% CAGR · organised segment growing 13.2%</p>
+  <div class="funnel">
+    <div class="fstep f1 reveal"><div class="fl">TAM — HORECA credit demand</div><div class="fv">₹95,000+ Cr</div><p>Working capital + expansion demand across 14M+ outlets (est. ~12% of industry GMV)</p></div>
+    <div class="fstep f2 reveal"><div class="fl">SAM — organised · physical · metro+T1</div><div class="fv">₹28,000 Cr</div><p>Customer-facing outlets in top 20 cities with digital payment trails — our underwritable universe</p></div>
+    <div class="fstep f3 reveal"><div class="fl">SOM — 5-year target</div><div class="fv">₹1,500 Cr AUM</div><p>~30,000 active loans at ₹5L average — 0.2% of outlets. Oxyzo built ₹11,822 Cr in broad SME; we need a sliver.</p></div>
+  </div>
+</div></section>
+
+<!-- SOLUTION -->
+<section><div class="wrap">
+  <div class="eyebrow">The solution</div>
+  <h2 class="disp">Built around how a kitchen actually earns.</h2>
+  <div class="pillars">
+    <div class="pillar p1 reveal"><div class="ico">🧠</div><h3>AI that sees the business</h3><ul>
+      <li>6-factor HORECA scoring — margin, growth, sales, location, ambience, bureau</li>
+      <li>Claude AI writes a full credit memo for every decision — transparent, auditable</li>
+      <li>FSA field force captures what no API can: footfall, hygiene, real seating</li></ul></div>
+    <div class="pillar p2 reveal"><div class="ico">⏰</div><h3>EMI that follows the cash</h3><ul>
+      <li>Daily EMI auto-debited 9–11 PM — right after the dinner-rush peak</li>
+      <li>Multi-bank waterfall: primary → secondary → tertiary standing instructions</li>
+      <li>Miss a day? Recoup any day that month — bureau sees only the monthly total</li></ul></div>
+    <div class="pillar p3 reveal"><div class="ico">🛡️</div><h3>Collections built for dignity</h3><ul>
+      <li>5-bucket framework (Clean → NPA) under RBI Fair Practices Code</li>
+      <li>Clean payers earn weekly/monthly EMI upgrades + cross-sell after 6 months</li>
+      <li>Escalation proportional to DPD — relationship first, recovery second</li></ul></div>
+  </div>
+</div></section>
+
+<!-- ENGINE -->
+<section style="background:var(--mist)"><div class="wrap">
+  <div class="eyebrow v">Product · AI underwriting</div>
+  <h2 class="disp">Six factors. One score. Full explanation.</h2>
+  <p class="lead">Generic lenders run ITR + CIBIL. We run the restaurant.</p>
+  <div class="factors" id="factors">
+    <div class="factor"><div class="fr"><span class="fn">Outlet margin</span><span class="fw num" style="color:var(--tandoor)">30%</span></div><div class="tr"><div class="fl2" data-w="100%" style="background:var(--tandoor)"></div></div><div class="fs">Menu-category matrix A–D: premium 35% → value 24%</div></div>
+    <div class="factor"><div class="fr"><span class="fn">Q-Q revenue growth</span><span class="fw num" style="color:#F97316">30%</span></div><div class="tr"><div class="fl2" data-w="100%" style="background:#F97316"></div></div><div class="fs">Bank statements + Swiggy/Zomato payout trails</div></div>
+    <div class="factor"><div class="fr"><span class="fn">Avg monthly sales</span><span class="fw num" style="color:var(--gold)">20%</span></div><div class="tr"><div class="fl2" data-w="67%" style="background:var(--gold)"></div></div><div class="fs">3-month verified average across all declared accounts</div></div>
+    <div class="factor"><div class="fr"><span class="fn">Location type</span><span class="fw num" style="color:var(--teal)">10%</span></div><div class="tr"><div class="fl2" data-w="33%" style="background:var(--teal)"></div></div><div class="fs">FSA geo-tag: IT park / mall / high street / captive / other</div></div>
+    <div class="factor"><div class="fr"><span class="fn">Ambience score</span><span class="fw num" style="color:#1D4ED8">5%</span></div><div class="tr"><div class="fl2" data-w="17%" style="background:#1D4ED8"></div></div><div class="fs">FSA field visit — décor, seating, hygiene (3-flag system)</div></div>
+    <div class="factor"><div class="fr"><span class="fn">CIBIL</span><span class="fw num" style="color:var(--faint)">5%</span></div><div class="tr"><div class="fl2" data-w="17%" style="background:var(--faint)"></div></div><div class="fs">Bureau pull — deliberately the smallest weight</div></div>
+  </div>
+  <div class="outcome reveal">Score 1–5 → bucket <b class="g">G auto-approve · 18%</b> &nbsp;·&nbsp; <b class="c">C conditional · 19–20%</b> &nbsp;·&nbsp; <b class="p">P manual / reject</b> &nbsp;+&nbsp; <b class="v">Claude credit memo on every run</b></div>
+</div></section>
+
+<!-- DEMO -->
+<section id="demo"><div class="wrap">
+  <div class="pulse"><i></i> LIVE DEMO — 90 SECONDS</div>
+  <h2 class="disp" style="margin-top:14px">Underwrite a real restaurant. Right now.</h2>
+  <p class="lead">You pick the numbers. Our production engine scores them in ~2 seconds.</p>
+  <div class="duo">
+    <div class="io in2 reveal"><div class="h">You type</div>
+      <div class="row"><span>Outlet</span><b>Spice Garden Cafe, BLR</b></div>
+      <div class="row"><span>Category / location</span><b>B · Mid-premium · High street</b></div>
+      <div class="row"><span>Avg monthly sales</span><b class="num">₹7,00,000</b></div>
+      <div class="row"><span>Q-Q growth</span><b class="num">12%</b></div>
+      <div class="row"><span>CIBIL</span><b class="num">740</b></div>
+      <div class="row"><span>Ambience (FSA)</span><b>2 positive · 1 average</b></div>
+    </div>
+    <div class="io out reveal"><div class="h">The engine returns</div>
+      <div class="row"><span>Composite score</span><b class="num">3.70 / 5.00</b></div>
+      <div class="row"><span>Bucket / decision</span><b class="c">C — approve w/ conditions</b></div>
+      <div class="row"><span>Rate / fee</span><b class="num">19% p.a. · 2.5% PF</b></div>
+      <div class="row"><span>Loan (Cycle-1 cap)</span><b class="num">₹7,00,000</b></div>
+      <div class="row"><span>Daily EMI</span><b class="a num">≈ ₹3,500/day at 9 PM</b></div>
+      <div class="row"><span>+ Claude credit memo</span><b class="v">weak factors · path to G</b></div>
+    </div>
+  </div>
+  <div class="demobtn">
+    <a class="btn fill" href="https://rasoi-capital.vercel.app/underwrite">Open the live tool →</a>
+    <p>Every number above is computed in our production database — not a mock-up.</p>
+  </div>
+</div></section>
+
+<!-- TILL (signature) -->
+<section id="till"><div class="wrap">
+  <div class="eyebrow">Product · Collections</div>
+  <h2 class="disp">We collect at 9 PM — when the till is full.</h2>
+  <p class="lead">Drag through a restaurant's day. The single biggest design unlock in HORECA lending — no competitor does this.</p>
+  <div class="tillbox reveal">
+    <svg id="curve" viewBox="0 0 640 240" aria-hidden="true">
+      <defs>
+        <linearGradient id="g1" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#E8520A" stop-opacity=".28"/><stop offset="1" stop-color="#E8520A" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      <rect x="480" y="14" width="106" height="206" rx="10" fill="#1aa05522" stroke="#15803D" stroke-dasharray="4 4" stroke-opacity=".5"/>
+      <text x="533" y="34" font-size="13" font-weight="700" fill="#15803D" text-anchor="middle">EMI 9–11 PM</text>
+      <path id="area" fill="url(#g1)"></path>
+      <path id="line" fill="none" stroke="#E8520A" stroke-width="4" stroke-linecap="round"></path>
+      <circle id="dot" r="9" fill="#E8520A" stroke="#fff" stroke-width="4"></circle>
+      <g id="xlabels" font-size="12" fill="#8E99B0" text-anchor="middle"></g>
+    </svg>
+    <div class="tillread">
+      <div class="tm num" id="tmread">9:00 PM</div>
+      <div class="st"><b class="num" id="tillpct">Till at 96%</b><span id="tillmsg">EMI fires now — money is in the account.</span></div>
+    </div>
+    <input class="scrub" id="scrub" type="range" min="0" max="100" value="88" aria-label="Time of day">
+    <div class="tillhint">← drag through the day →</div>
+  </div>
+  <div class="mech">
+    <div class="mrow reveal"><div class="d">1</div><div><h4>Daily EMI ≈ ₹3,500, not monthly ₹1,05,000</h4><p>A bad Tuesday costs one day's EMI — not the month. Borrower stress and default probability collapse together.</p></div></div>
+    <div class="mrow reveal"><div class="d">2</div><div><h4>Multi-bank waterfall</h4><p>Primary → secondary → tertiary accounts tried in sequence. HORECA's multi-account reality becomes our collection asset.</p></div></div>
+    <div class="mrow reveal"><div class="d">3</div><div><h4>Recoup window all month</h4><p>Missed days can be made up before month-end. Bureau reporting is monthly-cumulative — daily slips never scar the borrower's CIBIL.</p></div></div>
+    <div class="mrow reveal"><div class="d">4</div><div><h4>Good behaviour graduates</h4><p>6 clean months → weekly/monthly EMI option + larger Cycle-2 limits. Collections doubles as a retention engine.</p></div></div>
+  </div>
+</div></section>
+
+<!-- LADDER -->
+<section id="ladder"><div class="wrap">
+  <div class="eyebrow t">Product · Risk management</div>
+  <h2 class="disp">A collections ladder a regulator would write.</h2>
+  <p class="lead">Board-ready Collection &amp; Recovery Policy — RBI Fair Practices Code, IBC-aligned.</p>
+  <div class="rung reveal"><div class="stripe" style="background:var(--green)"></div><div class="body"><div class="bk" style="color:var(--green)">BUCKET 0a · ZERO DAILY MISSES</div><h4>Clean</h4><p>Reward &amp; graduate — weekly/monthly EMI option, cross-sell, Cycle-2 priority</p></div></div>
+  <div class="rung reveal"><div class="stripe" style="background:#65A30D"></div><div class="body"><div class="bk" style="color:#65A30D">BUCKET 0b · DAILY MISSES, MONTHLY CLEAN</div><h4>Normal</h4><p>Nurture — understand skips, re-time the SI, positive reminders</p></div></div>
+  <div class="rung reveal"><div class="stripe" style="background:var(--gold)"></div><div class="body"><div class="bk" style="color:var(--gold)">BUCKET 1–2 · 1–60 DPD</div><h4>Special (early)</h4><p>Soft resolve — calls, PTPs logged in LMS, restructure to cash-flow cycle</p></div></div>
+  <div class="rung reveal"><div class="stripe" style="background:#EA580C"></div><div class="body"><div class="bk" style="color:#EA580C">BUCKET 3 · 61–90 DPD</div><h4>Special (late)</h4><p>Prevent NPA — FSA field visit, distributor loop, intensive engagement</p></div></div>
+  <div class="rung reveal"><div class="stripe" style="background:var(--red)"></div><div class="body"><div class="bk" style="color:var(--red)">BUCKET 4 · 90+ DPD</div><h4>NPA</h4><p>Settle &amp; close — legal/enforcement as last resort, dignity preserved throughout</p></div></div>
+</div></section>
+
+
+<!-- DISTRIBUTION / TAM -->
+<section style="background:var(--paper)"><div class="wrap">
+  <div class="eyebrow">Distribution strategy</div>
+  <h2 class="disp">7.5M outlets. We reach them through their POS.</h2>
+  <p class="lead">Instead of building a field force of 10,000, we embed inside the software every restaurant already uses every day.</p>
+
+  <div style="display:grid;gap:14px;margin-top:24px">
+    <div class="card reveal" style="border-left:4px solid var(--tandoor);padding:18px 20px">
+      <div style="font-size:10.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin-bottom:10px">THE ADDRESSABLE UNIVERSE</div>
+      <div style="display:grid;gap:10px">
+        <div style="display:flex;gap:18px;align-items:center;padding:10px 0;border-bottom:1px solid #F0EAE0">
+          <div style="font-family:'Fraunces',serif;font-weight:720;font-size:28px;color:var(--ink);white-space:nowrap">7.5M+</div>
+          <div><div style="font-weight:700;font-size:13.5px">Total HORECA outlets in India</div><div style="font-size:11.5px;color:var(--faint);margin-top:2px">NRAI / industry estimate · 2nd-largest employer at 8.5M+ jobs</div></div>
+        </div>
+        <div style="display:flex;gap:18px;align-items:center;padding:10px 0;border-bottom:1px solid #F0EAE0">
+          <div style="font-family:'Fraunces',serif;font-weight:720;font-size:28px;color:var(--teal);white-space:nowrap">1.5M+</div>
+          <div><div style="font-weight:700;font-size:13.5px">Organised, physical, digital-payment enabled</div><div style="font-size:11.5px;color:var(--faint);margin-top:2px">Our underwritable universe — top 30 cities, formal outlets with POS or UPI</div></div>
+        </div>
+        <div style="display:flex;gap:18px;align-items:center;padding:10px 0">
+          <div style="font-family:'Fraunces',serif;font-weight:720;font-size:28px;color:var(--tandoor);white-space:nowrap">150K+</div>
+          <div><div style="font-weight:700;font-size:13.5px">On POS systems today (Petpooja + UrbanPiper)</div><div style="font-size:11.5px;color:var(--faint);margin-top:2px">Pre-verified, real-time sales data already flowing — Day-1 underwritable</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:22px">
+    <div style="font-size:10.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--tandoor);margin-bottom:14px">THE CHANNEL — POS-LED DISTRIBUTION</div>
+    <div style="display:grid;gap:10px">
+      <div class="card reveal" style="display:flex;gap:14px;align-items:center;border-left:4px solid var(--tandoor)">
+        <div style="flex:none"><div style="font-weight:800;font-size:15px;color:var(--tandoor)">Petpooja</div><div style="font-family:'Fraunces',serif;font-weight:720;font-size:22px">150K+</div><div style="font-size:10px;color:var(--faint)">outlets</div></div>
+        <div style="font-size:12.5px;color:var(--slate)">India's largest restaurant POS · 200+ cities · $27M raised. Revenue-sharing partnership: POS earns % of PF, zero upfront cost.</div>
+      </div>
+      <div class="card reveal" style="display:flex;gap:14px;align-items:center;border-left:4px solid var(--teal)">
+        <div style="flex:none"><div style="font-weight:800;font-size:15px;color:var(--teal)">UrbanPiper</div><div style="font-family:'Fraunces',serif;font-weight:720;font-size:22px">45K+</div><div style="font-size:10px;color:var(--faint)">outlets</div></div>
+        <div style="font-size:12.5px;color:var(--slate)">Backed by Swiggy &amp; Zomato · $32M raised · 30 countries. Integration gives real-time aggregator payout data for underwriting.</div>
+      </div>
+      <div class="card reveal" style="display:flex;gap:14px;align-items:center;border-left:4px solid #CBD5E1">
+        <div style="flex:none"><div style="font-weight:800;font-size:15px;color:var(--faint)">Others</div><div style="font-family:'Fraunces',serif;font-weight:720;font-size:22px">100K+</div><div style="font-size:10px;color:var(--faint)">outlets</div></div>
+        <div style="font-size:12.5px;color:var(--slate)">GoFrugal, Posist, Torqus, Billberry, Petpooja Go — long tail of POS players covering Tier-2 and below.</div>
+      </div>
+    </div>
+    <div style="margin-top:14px;background:#ECFDF5;border:1px solid #CDEBD6;border-radius:12px;padding:12px 16px;font-size:12.5px;font-weight:700;color:var(--green)">
+      ✓ Revenue-sharing model — POS partner earns % of PF on every loan originated. No upfront cost. Pure incentive alignment. Competitor field-sales CAC: ₹8,000–15,000/loan. Ours: near ₹0 on repeats.
+    </div>
+  </div>
+</div></section>
+
+<!-- MOAT & USP -->
+<section style="background:var(--cream)"><div class="wrap">
+  <div class="eyebrow v">Why we win · Moat &amp; USP</div>
+  <h2 class="disp">Five unfair advantages. None of them copyable.</h2>
+  <div style="display:grid;gap:14px;margin-top:24px">
+
+    <div class="card reveal" style="border-top:4px solid var(--violet)">
+      <div style="font-size:10.5px;font-weight:800;color:var(--faint);letter-spacing:.1em;margin-bottom:6px">01 · AI UNDERWRITING</div>
+      <h3 style="font-size:16px">🧠 We score the business, not the paperwork</h3>
+      <p style="font-size:13px;color:var(--slate);margin-top:6px">6-factor HORECA model: outlet margin, Q-Q growth, location, FSA ambience, sales, bureau. CIBIL is our smallest weight at 5%. Every competitor builds around it. That inversion lets us approve outlets banks reject — at lower NPA.</p>
+      <div style="margin-top:10px;background:#F5F3FF;border-radius:8px;padding:8px 12px;font-size:11.5px;font-weight:700;color:var(--violet)">🔒 Proprietary model calibrated to HORECA — no competitor dataset, 6-month rebuild minimum</div>
+    </div>
+
+    <div class="card reveal" style="border-top:4px solid var(--tandoor)">
+      <div style="font-size:10.5px;font-weight:800;color:var(--faint);letter-spacing:.1em;margin-bottom:6px">02 · DAILY EMI</div>
+      <h3 style="font-size:16px">⏰ Daily EMI at 9 PM — when the till is full</h3>
+      <p style="font-size:13px;color:var(--slate);margin-top:6px">HORECA earns daily. We collect daily, at peak. A bad Tuesday costs ₹3,500 — not ₹1,05,000. Monthly NACH competitors manufacture defaults by design. Our multi-bank SI waterfall is structurally impossible to replicate on monthly-EMI architecture.</p>
+      <div style="margin-top:10px;background:var(--ember);border-radius:8px;padding:8px 12px;font-size:11.5px;font-weight:700;color:var(--tandoor)">🔒 SI waterfall + daily bureau-reporting design — not retrofittable onto NACH infrastructure</div>
+    </div>
+
+    <div class="card reveal" style="border-top:4px solid var(--teal)">
+      <div style="font-size:10.5px;font-weight:800;color:var(--faint);letter-spacing:.1em;margin-bottom:6px">03 · DISTRIBUTION</div>
+      <h3 style="font-size:16px">📡 POS distribution — 150K+ outlets, near-zero CAC</h3>
+      <p style="font-size:13px;color:var(--slate);margin-top:6px">Petpooja (150K outlets, 200 cities) + UrbanPiper (45K outlets, Zomato/Swiggy-backed) are our channel. Revenue-sharing model: no fixed cost, pure incentive alignment. Competitor CAC: ₹8,000–15,000/loan. Ours: near ₹0 on repeats.</p>
+      <div style="margin-top:10px;background:#EBF7F5;border-radius:8px;padding:8px 12px;font-size:11.5px;font-weight:700;color:var(--teal)">🔒 Exclusive channel relationships + real-time POS data for underwriting — competitors need ground ops</div>
+    </div>
+
+    <div class="card reveal" style="border-top:4px solid var(--gold)">
+      <div style="font-size:10.5px;font-weight:800;color:var(--faint);letter-spacing:.1em;margin-bottom:6px">04 · DATA FLYWHEEL</div>
+      <h3 style="font-size:16px">📊 30× repayment data — the RL model no one else can build</h3>
+      <p style="font-size:13px;color:var(--slate);margin-top:6px">Daily EMI = 365 signals/loan/year. Monthly lenders get 12. We are training a Reinforcement Learning model on labelled HORECA repayment data — a dataset that doesn't exist anywhere on Earth today. By month 18, no competitor can buy this moat.</p>
+      <div style="margin-top:10px;background:#FBF1DC;border-radius:8px;padding:8px 12px;font-size:11.5px;font-weight:700;color:var(--gold)">🔒 Proprietary labelled HORECA default/repayment data — 18-month head start, cannot be acquired</div>
+    </div>
+
+    <div class="card reveal" style="border-top:4px solid var(--green)">
+      <div style="font-size:10.5px;font-weight:800;color:var(--faint);letter-spacing:.1em;margin-bottom:6px">05 · REGULATORY</div>
+      <h3 style="font-size:16px">🛡️ RBI-ready policy stack — live, board-reviewed</h3>
+      <p style="font-size:13px;color:var(--slate);margin-top:6px">Credit policy, Collection &amp; Recovery Policy (Fair Practices Code), bureau framework — all written, reviewed, and board-ready. Most NBFC applicants spend 6–9 months on this after funding. We walk in with it done.</p>
+      <div style="margin-top:10px;background:#EFFAF2;border-radius:8px;padding:8px 12px;font-size:11.5px;font-weight:700;color:var(--green)">🔒 Policy stack complete before licence — 6–9 month structural advantage over any new entrant</div>
+    </div>
+
+  </div>
+</div></section>
+
+<!-- COMPETE -->
+<section><div class="wrap">
+  <div class="eyebrow">Competition</div>
+  <h2 class="disp">Nobody underwrites a kitchen. Until now.</h2>
+  <div class="tblwrap reveal">
+  <table>
+    <tr><th></th><th>Oxyzo</th><th>LendingKart</th><th>FlexiLoans</th><th>Indifi</th><th>NeoGrowth</th><th class="us">RASOI</th></tr>
+    <tr><td>HORECA-specific scoring</td><td class="x">✗</td><td class="x">✗</td><td class="x">✗</td><td class="part">Partial</td><td class="x">✗</td><td class="us">✓ 6-factor</td></tr>
+    <tr><td>Field intelligence (FSA)</td><td class="x">✗</td><td class="x">✗</td><td class="x">✗</td><td class="x">✗</td><td class="x">✗</td><td class="us">✓ Built-in</td></tr>
+    <tr><td>Daily EMI @ cash peak</td><td class="x">✗</td><td class="x">✗</td><td class="x">✗</td><td class="x">✗</td><td class="part">Weekly (POS)</td><td class="us">✓ 9–11 PM SI</td></tr>
+    <tr><td>AI credit memo per loan</td><td class="x">✗</td><td class="x">✗</td><td class="x">✗</td><td class="x">✗</td><td class="x">✗</td><td class="us">✓ Claude</td></tr>
+    <tr><td>Borrower-friendly bureau</td><td class="x">✗</td><td class="x">✗</td><td class="x">✗</td><td class="x">✗</td><td class="x">✗</td><td class="us">✓ Monthly-cum.</td></tr>
+    <tr><td>Typical SME rate</td><td>12%+</td><td>18%+</td><td>19%+</td><td>Varies</td><td>20%+</td><td class="us">18–27% risk-based</td></tr>
+    <tr><td>Scale (context)</td><td>₹11.8k Cr AUM</td><td>5,000 params</td><td>$313M raised</td><td>$129M raised</td><td>POS-led</td><td class="us">Live demo + policies</td></tr>
+  </table>
+  </div>
+  <div class="swipehint">↔ swipe the table</div>
+  <p class="srcnote">Sources: company disclosures, FY25–26 filings, CB Insights. Oxyzo FY26: ₹1,494 Cr revenue, 0.74% NPA — proof SME lending prints money at scale; none of it is HORECA-deep.</p>
+</div></section>
+
+<!-- MOAT -->
+<section id="moat"><div class="wrap">
+  <div class="eyebrow v">Moat</div>
+  <h2 class="disp">Every loan we make, makes the next loan smarter.</h2>
+  <div class="wheel">
+    <div class="wnode w1 reveal"><h4>1 · Originate</h4><p>FSA captures ambience, location, category — data no bureau sells</p></div>
+    <div class="wnode w2 reveal"><h4>2 · Observe daily</h4><p>365 repayment signals per loan per year vs 12 for monthly lenders</p></div>
+    <div class="wnode w4 reveal"><h4>4 · Underwrite sharper</h4><p>Better approvals at same risk → lower NPA → cheaper debt capital</p></div>
+    <div class="wnode w3 reveal"><h4>3 · Label &amp; learn</h4><p>Outcomes feed rl_training_data — RL model already architected in production schema</p></div>
+  </div>
+  <div class="bigstats">
+    <div class="bstat reveal"><div class="bn">30×</div><p>more repayment data per loan than any monthly lender — the raw fuel for the RL model</p></div>
+    <div class="bstat reveal"><div class="bn">Zero</div><p>public datasets for outlet ambience, category margins, or footfall — ours is proprietary by construction</p></div>
+    <div class="bstat reveal"><div class="bn">2-sided</div><p>lock-in: borrowers graduate to better terms; our model graduates to better selection</p></div>
+  </div>
+</div></section>
+
+<!-- ECON -->
+<section><div class="wrap">
+  <div class="eyebrow">Business model</div>
+  <h2 class="disp">Unit economics of a single loan.</h2>
+  <p class="lead">Cycle-1 illustrative · Bucket C · ₹7L · 6 months · 19% p.a. + 2.5% PF</p>
+  <div class="ledger">
+    <div class="lrow plus reveal"><span>Interest income (6 mo)</span><b class="g num">+ ₹66,500</b></div>
+    <div class="lrow plus reveal"><span>Processing fee (2.5%)</span><b class="g num">+ ₹17,500</b></div>
+    <div class="lrow minus reveal"><span>Cost of debt capital (~10%)</span><b class="r num">− ₹35,000</b></div>
+    <div class="lrow minus reveal"><span>Opex + FSA + collections</span><b class="r num">− ₹4,200</b></div>
+    <div class="lrow minus reveal"><span>Expected credit loss (provision)</span><b class="r num">− ₹3,500</b></div>
+    <div class="lrow net reveal"><span>Net contribution / loan / cycle</span><b class="num">≈ ₹41,300</b></div>
+  </div>
+  <h3 style="margin-top:28px;font-size:16px">The borrower compounds:</h3>
+  <div class="cycles">
+    <div class="cyc reveal"><div><div class="cl">CYCLE 1</div><div class="ca">₹7L cap</div></div><p>6 months · prove-out · collateral by bucket</p></div>
+    <div class="cyc reveal"><div><div class="cl">CYCLE 2</div><div class="ca">Uncapped</div></div><p>repeat borrower · known daily-payment history</p></div>
+    <div class="cyc reveal"><div><div class="cl">CYCLE 3+</div><div class="ca">Uncapped</div></div><p>12 months · rate discounts via clean record</p></div>
+  </div>
+  <p class="srcnote">LTV compounds while CAC ≈ ₹0 on repeats — the FSA already knows the outlet.</p>
+</div></section>
+
+<!-- NBFC -->
+<section id="nbfc"><div class="wrap">
+  <div class="eyebrow t">Regulatory strategy</div>
+  <h2 class="disp">Two roads to the licence. Both fully costed.</h2>
+  <p class="lead">RBI mandates ₹10 Cr minimum Net Owned Fund either way (Sec 45-IA, RBI Act) — it anchors this raise.</p>
+  <div class="paths">
+    <div class="path pa reveal">
+      <div class="ph"><span class="ptag">PATH A</span><span class="pt">4–7 months</span></div>
+      <h3>Acquire an existing NBFC</h3>
+      <ul><li>Buy a clean, dormant NBFC-ICC shell with valid CoR</li>
+      <li>RBI prior approval — 26%+ stake / change of control + fit-&amp;-proper</li>
+      <li>30-day public notice, then capital infusion to ₹10 Cr+ NOF</li>
+      <li>Premium over book: ₹50L–1.5Cr by vintage &amp; cleanliness</li></ul>
+      <div class="win">✓ Faster to first disbursal · existing CoR</div>
+    </div>
+    <div class="path pb reveal">
+      <div class="ph"><span class="ptag">PATH B</span><span class="pt">9–15 months</span></div>
+      <h3>Apply for a fresh licence</h3>
+      <ul><li>Incorporate, capitalise ₹10 Cr NOF as liquid funds ab initio</li>
+      <li>COSMOS application — business plan, 5-yr projections, fit-&amp;-proper</li>
+      <li>Clean diligence trail — no legacy book, no inherited risk</li>
+      <li>Our policy stack (credit + collections) is already application-grade</li></ul>
+      <div class="win">✓ Zero legacy risk · cleanest cap table</div>
+    </div>
+  </div>
+  <div class="parallel reveal">We pursue Path A as primary with Path B filed in parallel — the ₹10 Cr NOF is identical and ring-fenced in this raise either way.</div>
+</div></section>
+
+<!-- FUNDS -->
+<section><div class="wrap">
+  <div class="eyebrow">The ask</div>
+  <h2 class="disp">₹50 Cr — regulation-anchored, loan-deployed.</h2>
+  <div class="fund" id="fund">
+    <div class="frow"><div class="fh"><b>Lending corpus (on-book AUM seed)</b><span class="num" style="color:var(--tandoor)">52% · ₹14–28 Cr</span></div><div class="tr2"><div class="fl3" data-w="100%" style="background:var(--tandoor)"></div></div><p>First ~5,000 loans · Bengaluru → 4 cities · proves the book for debt lines &amp; co-lending</p></div>
+    <div class="frow"><div class="fh"><b>NBFC NOF + licence/acquisition</b><span class="num" style="color:var(--teal)">27% · ₹10–12 Cr</span></div><div class="tr2"><div class="fl3" data-w="52%" style="background:var(--teal)"></div></div><p>RBI-mandated ₹10 Cr liquid NOF + shell premium / application costs — ring-fenced, not burn</p></div>
+    <div class="frow"><div class="fh"><b>Technology &amp; AI</b><span class="num" style="color:var(--violet)">8% · ₹2.5–4 Cr</span></div><div class="tr2"><div class="fl3" data-w="15%" style="background:var(--violet)"></div></div><p>FSA mobile app, RL model build-out, bank-statement APIs (Perfios), LMS hardening</p></div>
+    <div class="frow"><div class="fh"><b>Field ops &amp; distribution</b><span class="num" style="color:var(--gold)">7% · ₹2–3.5 Cr</span></div><div class="tr2"><div class="fl3" data-w="13%" style="background:var(--gold)"></div></div><p>FSA network in 4 cities, distributor partnerships, collections infrastructure</p></div>
+    <div class="frow"><div class="fh"><b>Team, compliance &amp; buffer</b><span class="num" style="color:var(--faint)">6% · ₹1.5–2.5 Cr</span></div><div class="tr2"><div class="fl3" data-w="11%" style="background:var(--faint)"></div></div><p>Credit head, compliance officer, ops core + 12-month regulatory runway</p></div>
+  </div>
+  <div class="greenline reveal">≈ 80% of the raise sits in regulated capital + loan book — recoverable assets, not operating burn.</div>
+</div></section>
+
+<!-- ROADMAP -->
+<section id="road"><div class="wrap">
+  <div class="eyebrow">Execution plan</div>
+  <h2 class="disp">From licence to ₹150 Cr AUM in 24 months.</h2>
+  <div class="roadscroll">
+    <div class="rcard r1"><div class="rt">M0–6</div><h3>Licence &amp; pilot</h3><ul><li>NBFC acquisition / application filed</li><li>Bengaluru pilot: 200 loans, ₹6 Cr</li><li>FSA app live · RL data accumulating</li></ul><div class="kpi">NPA &lt; 2.5%</div></div>
+    <div class="rcard r2"><div class="rt">M7–12</div><h3>Prove the book</h3><ul><li>4 cities: BLR, HYD, CHN, PUN</li><li>2,500 loans · ₹35 Cr AUM</li><li>First debt line / co-lending signed</li></ul><div class="kpi">NPA &lt; 2% · 60% repeat</div></div>
+    <div class="rcard r3"><div class="rt">M13–18</div><h3>Scale with leverage</h3><ul><li>RL model live in underwriting</li><li>8 cities · distributor channel at 30% of originations</li><li>₹80 Cr AUM on 2× leverage</li></ul><div class="kpi">Opex/AUM &lt; 4%</div></div>
+    <div class="rcard r4"><div class="rt">M19–24</div><h3>Series A position</h3><ul><li>₹150 Cr AUM · 12,000+ active loans</li><li>AI-scored share &gt; 85% of book</li><li>Co-lending with 2 banks/NBFCs</li></ul><div class="kpi">Path to profitability visible</div></div>
+  </div>
+  <p class="srcnote">Benchmark: Bajaj Finance disbursed ₹1,600 Cr in one quarter via AI scoring (~10% of its loans). Our 24-month exit target is 85% AI-scored — born-AI, not retrofitted.</p>
+</div></section>
+
+<!-- CLOSE -->
+<section id="close"><div class="wrap">
+  <div class="eyebrow">Rasoi Capital</div>
+  <h2 class="disp">The kitchen always pays. <span class="or">Now someone finally lends to it.</span></h2>
+  <div class="checks">
+    <div class="check reveal"><span class="tick">✓</span><div><h4>Working product</h4><p>Live AI underwriting + full lending stack — demo in your hands today</p></div></div>
+    <div class="check reveal"><span class="tick">✓</span><div><h4>Regulatory clarity</h4><p>₹10 Cr NOF priced in · both licence paths costed · policies board-ready</p></div></div>
+    <div class="check reveal"><span class="tick">✓</span><div><h4>Unfair data</h4><p>Daily-EMI = 30× repayment signal density — the RL moat compounds from loan #1</p></div></div>
+    <div class="check reveal"><span class="tick">✓</span><div><h4>Asset-backed raise</h4><p>~80% of funds become NOF + loan book, not burn</p></div></div>
+  </div>
+  <div class="finalcta reveal">
+    <p>🎯 Try it before you decide</p>
+    <a href="https://rasoi-capital.vercel.app/underwrite">rasoi-capital.vercel.app/underwrite</a>
+  </div>
+  <a class="btn line" href="/RasoiCapital_PitchDeck.pptx" download="RasoiCapital_PitchDeck.pptx" style="margin-top:14px;justify-content:center;border-color:#D8DEE8;width:100%;display:inline-flex">⬇ Download pitch deck (.pptx)</a>
+  <div class="team">Goverdhan M D — Co-founder · Aparna — Co-founder<br>Srinivas J — Co-founder · Boi — Co-founder</div>
+</div></section>
+
+<footer>Rasoi Capital · Nexus AI · Bengaluru · June 2026 · Figures marked illustrative are pre-licence estimates.</footer>
+
+<script>
+// ── scroll progress ──
+const prog=document.getElementById('prog');
+addEventListener('scroll',()=>{const h=document.documentElement;prog.style.width=(h.scrollTop/(h.scrollHeight-h.clientHeight)*100)+'%'},{passive:true});
+
+// ── reveal on scroll ──
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.18});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+// ── animated bars (market / factors / funds) ──
+function arm(contSel,childSel,attr,prop){const cont=document.querySelector(contSel);if(!cont)return;const fire=()=>cont.querySelectorAll(childSel).forEach(el=>el.style[prop]=el.dataset[attr]);const o=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){fire();o.disconnect()}}),{threshold:.15});o.observe(cont);setTimeout(()=>{const r=cont.getBoundingClientRect();if(r.top<innerHeight&&r.bottom>0){fire();o.disconnect()}},600);}
+arm('#mbars','.b','h','height');
+arm('#factors','.fl2','w','width');
+arm('#fund','.fl3','w','width');
+
+// ── THE 9PM TILL (signature) ──
+(function(){
+  const pts=[[0,12],[3,6],[6,10],[9,22],[12,52],[14,40],[16,38],[18,58],[19,74],[20,92],[21,100],[22,86],[23,62],[24,40]];
+  const W=640,H=240,PADL=16,PADR=16,TOP=26,BOT=34;
+  const X=t=>PADL+(t/24)*(W-PADL-PADR);
+  const Y=v=>TOP+(1-v/100)*(H-TOP-BOT);
+  // catmull-rom → bezier for smooth curve
+  function path(p){let d=`M ${X(p[0][0])} ${Y(p[0][1])}`;for(let i=0;i<p.length-1;i++){const p0=p[Math.max(i-1,0)],p1=p[i],p2=p[i+1],p3=p[Math.min(i+2,p.length-1)];const c1x=X(p1[0])+(X(p2[0])-X(p0[0]))/6,c1y=Y(p1[1])+(Y(p2[1])-Y(p0[1]))/6;const c2x=X(p2[0])-(X(p3[0])-X(p1[0]))/6,c2y=Y(p2[1])-(Y(p3[1])-Y(p1[1]))/6;d+=` C ${c1x} ${c1y}, ${c2x} ${c2y}, ${X(p2[0])} ${Y(p2[1])}`}return d}
+  const d=path(pts);
+  document.getElementById('line').setAttribute('d',d);
+  document.getElementById('area').setAttribute('d',d+` L ${X(24)} ${Y(0)} L ${X(0)} ${Y(0)} Z`);
+  const xl=document.getElementById('xlabels');
+  [[0,'12 AM'],[6,'6 AM'],[12,'12 PM'],[18,'6 PM'],[21,'9 PM'],[24,'12 AM']].forEach(([t,l])=>{const e=document.createElementNS('http://www.w3.org/2000/svg','text');e.setAttribute('x',X(t));e.setAttribute('y',H-8);e.textContent=l;xl.appendChild(e)});
+  // value lookup (linear interp on points)
+  function val(t){for(let i=0;i<pts.length-1;i++){const[a,va]=pts[i],[b,vb]=pts[i+1];if(t>=a&&t<=b){const f=(t-a)/(b-a);return va+f*(vb-va)}}return pts[pts.length-1][1]}
+  const dot=document.getElementById('dot'),scrub=document.getElementById('scrub'),tm=document.getElementById('tmread'),pc=document.getElementById('tillpct'),msg=document.getElementById('tillmsg');
+  function fmt(t){let h=Math.floor(t),m=Math.round((t-h)*60);if(m===60){h++;m=0}const ap=h>=12&&h<24?'PM':'AM';let hh=h%12;if(hh===0)hh=12;return `${hh}:${String(m).padStart(2,'0')} ${ap}`}
+  function update(){
+    const t=(scrub.value/100)*24,v=val(t);
+    dot.setAttribute('cx',X(t));dot.setAttribute('cy',Y(v));
+    tm.textContent=fmt(t);pc.textContent=`Till at ${Math.round(v)}%`;
+    msg.textContent = (t>=21&&t<=23)?'EMI fires now — money is in the account.':(t>=8&&t<11)?'Morning lull — a monthly NACH here bounces.':(t>=12&&t<14)?'Lunch service — till filling.':(t>=18&&t<21)?'Dinner rush building…':'Quiet hours — collecting now would fail.';
+  }
+  scrub.addEventListener('input',update,{passive:true});
+  update();
+})();
+</script>
+</body>
+</html>
