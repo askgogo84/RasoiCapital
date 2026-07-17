@@ -1,7 +1,7 @@
-// app/underwrite/flow/page.tsx
+// app/underwrite/page.tsx
 // Phase 3 — the real underwrite flow: Identity → Documents → Reconciliation → Score → Decision.
 // Chains the Phase 1 parse API, Phase 2 reconcile API, and the derived-scoring API.
-// Light theme, mobile-first (375px baseline). Replaces the two throwaway test pages for demo use.
+// Terminal theme via rc-* classes (app/rasoi-theme.css), mobile-first (375px baseline).
 "use client";
 
 import { useState } from "react";
@@ -55,8 +55,8 @@ export default function UnderwriteFlow() {
   const [scoreBusy, setScoreBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  const bandColor = (b: string) => (b === "TRUSTED" ? "#059669" : b === "REVIEW" ? "#d97706" : "#dc2626");
-  const bucketColor = (b: string) => (b === "G" ? "#059669" : b === "C" ? "#d97706" : "#dc2626");
+  const bandColor = (b: string) => (b === "TRUSTED" ? "var(--rc-lime)" : b === "REVIEW" ? "var(--rc-amber)" : "var(--rc-red)");
+  const bucketColor = (b: string) => (b === "G" ? "var(--rc-lime)" : b === "C" ? "var(--rc-amber)" : "var(--rc-red)");
 
   async function goFromIdentity() {
     setErr(null); setExhaustBusy(true);
@@ -162,12 +162,13 @@ export default function UnderwriteFlow() {
   }
 
   const Badge = ({ p }: { p: Provenance }) => {
-    const map: Record<Provenance, [string, string]> = {
-      DERIVED: ["#059669", "DERIVED"], MANUAL: ["#64748b", "MANUAL"],
-      MANUAL_OVERRIDE: ["#d97706", "OVERRIDE"], ASSUMED: ["#94a3b8", "ASSUMED"],
+    const map: Record<Provenance, string> = {
+      DERIVED: "der", MANUAL: "man", MANUAL_OVERRIDE: "der", ASSUMED: "man",
     };
-    const [c, t] = map[p];
-    return <span className="ml-2 rounded px-1.5 py-0.5 text-[10px] font-semibold" style={{ color: c, border: `1px solid ${c}` }}>{t}</span>;
+    const label: Record<Provenance, string> = {
+      DERIVED: "DERIVED", MANUAL: "MANUAL", MANUAL_OVERRIDE: "OVERRIDE", ASSUMED: "ASSUMED",
+    };
+    return <span className={`rc-badge ${map[p]}`}>{label[p]}</span>;
   };
 
   const canNext = step === 0 ? outlet.trim().length > 0
@@ -175,65 +176,73 @@ export default function UnderwriteFlow() {
     : true;
 
   return (
-    <div className="min-h-screen bg-slate-50 px-4 py-6">
+    <div className="rc-app" style={{ minHeight: "auto", background: "transparent" }}>
       <div className="mx-auto w-full max-w-3xl">
         {/* Stepper */}
         <div className="mb-6 flex items-center justify-between">
           {STEPS.map((s, i) => (
             <div key={s} className="flex flex-1 items-center">
-              <div className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold ${i <= step ? "bg-slate-900 text-white" : "bg-slate-200 text-slate-500"}`}>{i + 1}</div>
-              <span className={`ml-2 hidden text-xs sm:inline ${i <= step ? "text-slate-900" : "text-slate-400"}`}>{s}</span>
-              {i < STEPS.length - 1 && <div className={`mx-2 h-0.5 flex-1 ${i < step ? "bg-slate-900" : "bg-slate-200"}`} />}
+              <div className="rc-mono flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold"
+                   style={i <= step
+                     ? { background: "var(--rc-cyan)", color: "var(--rc-bg)" }
+                     : { background: "var(--rc-panel2)", color: "var(--rc-dim)" }}>{i + 1}</div>
+              <span className="ml-2 hidden text-xs sm:inline"
+                    style={{ color: i <= step ? "var(--rc-fg)" : "var(--rc-dim)" }}>{s}</span>
+              {i < STEPS.length - 1 && <div className="mx-2 h-0.5 flex-1"
+                    style={{ background: i < step ? "var(--rc-cyan)" : "var(--rc-line)" }} />}
             </div>
           ))}
         </div>
 
-        {err && <pre className="mb-4 overflow-auto rounded-lg border border-red-300 bg-red-50 p-3 text-xs text-red-800">{err}</pre>}
+        {err && <pre className="rc-mono mb-4 overflow-auto rounded-lg p-3 text-xs"
+                  style={{ border: "1px solid var(--rc-red)", background: "rgba(248,81,73,.1)", color: "var(--rc-red)" }}>{err}</pre>}
 
         {/* Step 0 — Identity */}
         {step === 0 && (
-          <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-6">
-            <h2 className="text-lg font-bold text-slate-900">Outlet Identity</h2>
-            <label className="block text-sm font-medium text-slate-700">Outlet name
+          <div className="rc-panel space-y-4">
+            <div className="rc-panel-title">Outlet Identity</div>
+            <label className="rc-label">Outlet name
               <input value={outlet} onChange={(e) => setOutlet(e.target.value)} placeholder="e.g. Green Leaf Cafe"
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-3 text-slate-900" /></label>
-            <label className="block text-sm font-medium text-slate-700">City
+                className="rc-input mt-1" /></label>
+            <label className="rc-label">City
               <input value={city} onChange={(e) => setCity(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-3 text-slate-900" /></label>
+                className="rc-input mt-1" /></label>
           </div>
         )}
 
         {/* Step 1 — Documents */}
         {step === 1 && (
-          <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-6">
-            <h2 className="text-lg font-bold text-slate-900">Documents — {outlet}</h2>
+          <div className="rc-panel space-y-4">
+            <div className="rc-panel-title">Documents — {outlet}</div>
             {existingDocs.length > 0 && (
-              <div className="rounded-lg bg-emerald-50 px-3 py-2 text-xs text-emerald-800">
+              <div className="rounded-lg px-3 py-2 text-xs"
+                   style={{ background: "var(--rc-badge-der-bg)", color: "var(--rc-badge-der-fg)" }}>
                 ✓ {existingDocs.length} document(s) already on file for this outlet — you can reconcile without re-uploading, or upload fresh copies to replace.
               </div>
             )}
             {exhaust && (
-              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+              <div className="rounded-lg p-3" style={{ background: "var(--rc-panel2)", border: "1px solid var(--rc-line)" }}>
                 <div className="mb-1 flex items-center justify-between">
-                  <span className="text-xs font-semibold text-slate-700">Digital exhaust pre-score</span>
-                  <span className="rounded bg-slate-900 px-2 py-0.5 text-xs font-bold text-white">{exhaust.prescore} / 5</span>
+                  <span className="text-xs font-semibold" style={{ color: "var(--rc-fg)" }}>Digital exhaust pre-score</span>
+                  <span className="rc-mono rounded px-2 py-0.5 text-xs font-bold"
+                        style={{ background: "var(--rc-cyan)", color: "var(--rc-bg)" }}>{exhaust.prescore} / 5</span>
                 </div>
-                <div className="text-[11px] text-slate-500">
+                <div className="rc-mono text-[11px]" style={{ color: "var(--rc-dim)" }}>
                   {exhaust.signals?.rating}★ · Cat {exhaust.derived?.menu_category?.category} · Loc {exhaust.derived?.location?.code} · scored before any document upload
                 </div>
-                <div className="mt-1 text-[10px] italic text-slate-400">Demo Mode — live Google Places feed connects on go-live.</div>
+                <div className="mt-1 text-[10px] italic" style={{ color: "var(--rc-dim)" }}>Demo Mode — live Google Places feed connects on go-live.</div>
               </div>
             )}
             {docs.map((d, i) => (
-              <div key={d.type} className="rounded-lg border border-dashed border-slate-300 p-4">
+              <div key={d.type} className="rounded-lg p-4" style={{ border: "1px dashed var(--rc-line)" }}>
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="text-sm font-medium text-slate-800">{d.label}</div>
-                    <div className="text-xs" style={{ color: d.state === "parsed" ? "#059669" : d.state === "failed" ? "#dc2626" : "#64748b" }}>
+                    <div className="text-sm font-medium" style={{ color: "var(--rc-fg)" }}>{d.label}</div>
+                    <div className="rc-mono text-xs" style={{ color: d.state === "parsed" ? "var(--rc-lime)" : d.state === "failed" ? "var(--rc-red)" : "var(--rc-dim)" }}>
                       {d.state === "idle" ? "Not uploaded" : d.state === "uploading" ? "Uploading…" : d.state === "parsing" ? "Parsing… (bank statements take 1–3 min)" : d.state === "parsed" ? `✓ ${d.detail}` : `✗ ${d.detail}`}
                     </div>
                   </div>
-                  <label className="cursor-pointer rounded-lg bg-slate-900 px-3 py-2 text-xs font-medium text-white">
+                  <label className="rc-btn cursor-pointer" style={{ width: "auto", padding: "8px 14px", fontSize: 13 }}>
                     Choose PDF
                     <input type="file" accept="application/pdf" className="hidden"
                       onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadDoc(i, f); }} />
@@ -242,7 +251,7 @@ export default function UnderwriteFlow() {
               </div>
             ))}
             <button onClick={runReconcile} disabled={reconBusy || !docs.some((d) => d.state === "parsed")}
-              className="w-full rounded-lg bg-emerald-600 px-4 py-3 font-medium text-white disabled:opacity-40">
+              className="rc-btn">
               {reconBusy ? "Reconciling…" : "Reconcile & Continue →"}
             </button>
           </div>
@@ -252,67 +261,67 @@ export default function UnderwriteFlow() {
         {step === 2 && recon && (
           <div className="space-y-4">
             <div className="grid grid-cols-3 gap-3">
-              <div className="rounded-xl border border-slate-200 bg-white p-4 text-center">
-                <div className="text-xs text-slate-500">Match Rate</div>
-                <div className="text-2xl font-bold text-slate-900">{recon.match.rate}%</div>
-                <div className="text-xs text-slate-500">{recon.match.matched} matched</div>
+              <div className="rc-panel text-center" style={{ padding: 16 }}>
+                <div className="rc-eyebrow">Match Rate</div>
+                <div className="rc-mono text-2xl font-bold" style={{ color: "var(--rc-fg)" }}>{recon.match.rate}%</div>
+                <div className="text-xs" style={{ color: "var(--rc-dim)" }}>{recon.match.matched} matched</div>
               </div>
-              <div className="rounded-xl border border-slate-200 bg-white p-4 text-center">
-                <div className="text-xs text-slate-500">Data Integrity</div>
-                <div className="text-2xl font-bold" style={{ color: bandColor(recon.integrity.band) }}>{recon.integrity.dis}</div>
-                <div className="text-xs font-semibold" style={{ color: bandColor(recon.integrity.band) }}>{recon.integrity.band}</div>
+              <div className="rc-panel text-center" style={{ padding: 16 }}>
+                <div className="rc-eyebrow">Data Integrity</div>
+                <div className="rc-mono text-2xl font-bold" style={{ color: bandColor(recon.integrity.band) }}>{recon.integrity.dis}</div>
+                <div className="rc-mono text-xs font-semibold" style={{ color: bandColor(recon.integrity.band) }}>{recon.integrity.band}</div>
               </div>
-              <div className="rounded-xl border border-slate-200 bg-white p-4 text-center">
-                <div className="text-xs text-slate-500">Avg Monthly Sales</div>
-                <div className="text-2xl font-bold text-slate-900">₹{(recon.derived.avg_monthly_sales / 100000).toFixed(2)}L</div>
-                <div className="text-xs text-slate-500">QoQ {recon.derived.qq_growth_pct}%</div>
+              <div className="rc-panel text-center" style={{ padding: 16 }}>
+                <div className="rc-eyebrow">Avg Monthly Sales</div>
+                <div className="rc-mono text-2xl font-bold" style={{ color: "var(--rc-fg)" }}>₹{(recon.derived.avg_monthly_sales / 100000).toFixed(2)}L</div>
+                <div className="text-xs" style={{ color: "var(--rc-dim)" }}>QoQ {recon.derived.qq_growth_pct}%</div>
               </div>
             </div>
             {recon.integrity.anomalies?.length > 0 && (
-              <div className="rounded-xl border border-red-200 bg-red-50 p-4">
-                <div className="mb-2 text-sm font-semibold text-red-800">{recon.integrity.anomaly_count} anomalies detected</div>
-                <ul className="space-y-1 text-xs text-red-700">
-                  {recon.integrity.anomalies.slice(0, 6).map((a: any, i: number) => (<li key={i}>• <b>{a.type}</b> ({a.severity}) — {a.detail}</li>))}
+              <div className="rc-panel" style={{ borderLeft: "3px solid var(--rc-red)" }}>
+                <div className="mb-2 text-sm font-semibold" style={{ color: "var(--rc-red)" }}>{recon.integrity.anomaly_count} anomalies detected</div>
+                <ul className="space-y-1 text-xs" style={{ color: "var(--rc-dim)" }}>
+                  {recon.integrity.anomalies.slice(0, 6).map((a: any, i: number) => (<li key={i}>• <b style={{ color: "var(--rc-fg)" }}>{a.type}</b> ({a.severity}) — {a.detail}</li>))}
                 </ul>
               </div>
             )}
-            <button onClick={() => setStep(3)} className="w-full rounded-lg bg-slate-900 px-4 py-3 font-medium text-white">Continue to Scoring →</button>
+            <button onClick={() => setStep(3)} className="rc-btn">Continue to Scoring →</button>
           </div>
         )}
 
         {/* Step 3 — Score inputs */}
         {step === 3 && (
-          <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-6">
-            <h2 className="text-lg font-bold text-slate-900">6-Factor Scoring</h2>
+          <div className="rc-panel space-y-4">
+            <div className="rc-panel-title">6-Factor Scoring</div>
             <div className="grid grid-cols-2 gap-4">
-              <label className="block text-sm font-medium text-slate-700">Avg Monthly Sales (₹)<Badge p={salesProv} />
+              <label className="rc-label">Avg Monthly Sales (₹)<Badge p={salesProv} />
                 <input type="number" value={avgSales} onChange={(e) => { setAvgSales(e.target.value === "" ? "" : Number(e.target.value)); if (salesProv === "DERIVED") setSalesProv("MANUAL_OVERRIDE"); }}
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900" /></label>
-              <label className="block text-sm font-medium text-slate-700">Q-Q Growth (%)<Badge p={growthProv} />
+                  className="rc-input mt-1" /></label>
+              <label className="rc-label">Q-Q Growth (%)<Badge p={growthProv} />
                 <input type="number" value={qqGrowth} onChange={(e) => { setQqGrowth(e.target.value === "" ? "" : Number(e.target.value)); if (growthProv === "DERIVED") setGrowthProv("MANUAL_OVERRIDE"); }}
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900" /></label>
-              <label className="block text-sm font-medium text-slate-700">Menu Category<Badge p={catProv} />
-                <select value={outletCategory} onChange={(e) => { setOutletCategory(e.target.value); if (catProv === "DERIVED") setCatProv("MANUAL_OVERRIDE"); }} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900">
+                  className="rc-input mt-1" /></label>
+              <label className="rc-label">Menu Category<Badge p={catProv} />
+                <select value={outletCategory} onChange={(e) => { setOutletCategory(e.target.value); if (catProv === "DERIVED") setCatProv("MANUAL_OVERRIDE"); }} className="rc-select mt-1">
                   {["A", "B", "C", "D"].map((c) => <option key={c} value={c}>Cat {c}</option>)}</select></label>
-              <label className="block text-sm font-medium text-slate-700">Location<Badge p={locProv} />
-                <select value={locationCode} onChange={(e) => { setLocationCode(e.target.value); if (locProv === "DERIVED") setLocProv("MANUAL_OVERRIDE"); }} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900">
+              <label className="rc-label">Location<Badge p={locProv} />
+                <select value={locationCode} onChange={(e) => { setLocationCode(e.target.value); if (locProv === "DERIVED") setLocProv("MANUAL_OVERRIDE"); }} className="rc-select mt-1">
                   {["A", "B", "C", "D", "E"].map((c) => <option key={c} value={c}>Loc {c}</option>)}</select></label>
-              <label className="block text-sm font-medium text-slate-700">Ambience — positive<Badge p={ambProv} />
-                <select value={ambiencePos} onChange={(e) => { setAmbiencePos(Number(e.target.value)); if (ambProv === "DERIVED") setAmbProv("MANUAL_OVERRIDE"); }} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900">
+              <label className="rc-label">Ambience — positive<Badge p={ambProv} />
+                <select value={ambiencePos} onChange={(e) => { setAmbiencePos(Number(e.target.value)); if (ambProv === "DERIVED") setAmbProv("MANUAL_OVERRIDE"); }} className="rc-select mt-1">
                   {[0, 1, 2, 3].map((n) => <option key={n} value={n}>{n} positive</option>)}</select></label>
-              <label className="block text-sm font-medium text-slate-700">Ambience — average<Badge p={ambProv} />
-                <select value={ambienceAvg} onChange={(e) => { setAmbienceAvg(Number(e.target.value)); if (ambProv === "DERIVED") setAmbProv("MANUAL_OVERRIDE"); }} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900">
+              <label className="rc-label">Ambience — average<Badge p={ambProv} />
+                <select value={ambienceAvg} onChange={(e) => { setAmbienceAvg(Number(e.target.value)); if (ambProv === "DERIVED") setAmbProv("MANUAL_OVERRIDE"); }} className="rc-select mt-1">
                   {[0, 1, 2, 3].map((n) => <option key={n} value={n}>{n} average</option>)}</select></label>
-              <label className="block text-sm font-medium text-slate-700">CIBIL Score<Badge p="MANUAL" />
-                <input type="number" value={cibilScore} onChange={(e) => setCibilScore(Number(e.target.value))} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900" /></label>
-              <label className="block text-sm font-medium text-slate-700">Loan Cycle<Badge p="MANUAL" />
-                <select value={cycleNumber} onChange={(e) => setCycleNumber(Number(e.target.value))} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900">
+              <label className="rc-label">CIBIL Score<Badge p="MANUAL" />
+                <input type="number" value={cibilScore} onChange={(e) => setCibilScore(Number(e.target.value))} className="rc-input mt-1" /></label>
+              <label className="rc-label">Loan Cycle<Badge p="MANUAL" />
+                <select value={cycleNumber} onChange={(e) => setCycleNumber(Number(e.target.value))} className="rc-select mt-1">
                   <option value={1}>1st loan (cap ₹3L)</option><option value={2}>2nd loan (cap ₹7L)</option><option value={3}>3rd+ loan</option></select></label>
-              <label className="block text-sm font-medium text-slate-700">Tenure (months)<Badge p="MANUAL" />
-                <select value={tenureMonths} onChange={(e) => setTenureMonths(Number(e.target.value))} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900">
+              <label className="rc-label">Tenure (months)<Badge p="MANUAL" />
+                <select value={tenureMonths} onChange={(e) => setTenureMonths(Number(e.target.value))} className="rc-select mt-1">
                   <option value={24}>24 months (default)</option><option value={12}>12 months</option><option value={18}>18 months</option><option value={36}>36 months</option></select></label>
             </div>
-            <button onClick={runScore} disabled={scoreBusy} className="w-full rounded-lg bg-slate-900 px-4 py-3 font-medium text-white disabled:opacity-40">
+            <button onClick={runScore} disabled={scoreBusy} className="rc-btn">
               {scoreBusy ? "Scoring…" : "Analyse & Underwrite →"}</button>
           </div>
         )}
@@ -320,39 +329,40 @@ export default function UnderwriteFlow() {
         {/* Step 4 — Decision */}
         {step === 4 && score && (
           <div className="space-y-4">
-            <div className="rounded-xl border-2 bg-white p-6 text-center" style={{ borderColor: bucketColor(score.bucket) }}>
-              <div className="text-xs uppercase tracking-wide text-slate-500">Decision</div>
-              <div className="text-3xl font-bold" style={{ color: bucketColor(score.bucket) }}>{score.bucket_label}</div>
-              <div className="mt-1 text-sm text-slate-600">Composite score {score.composite_score} / 5.0 · {score.decision.replace(/_/g, " ")}</div>
+            <div className="rc-panel text-center" style={{ borderLeft: `3px solid ${bucketColor(score.bucket)}` }}>
+              <div className="rc-eyebrow">Decision</div>
+              <div className="rc-mono text-3xl font-bold" style={{ color: bucketColor(score.bucket) }}>{score.bucket_label}</div>
+              <div className="mt-1 text-sm" style={{ color: "var(--rc-dim)" }}>Composite score {score.composite_score} / 5.0 · {score.decision.replace(/_/g, " ")}</div>
               {score.integrity_override && (
-                <div className="mt-3 rounded-lg bg-red-50 p-2 text-xs font-semibold text-red-700">
+                <div className="mt-3 rounded-lg p-2 text-xs font-semibold"
+                     style={{ background: "rgba(248,81,73,.1)", color: "var(--rc-red)" }}>
                   ⚠ Data-integrity override: reconciliation FLAGGED — forced to Pause regardless of score
                 </div>
               )}
             </div>
             <div className="grid grid-cols-3 gap-2 text-center text-xs">
               {Object.entries(score.factors).map(([k, v]) => (
-                <div key={k} className="rounded-lg border border-slate-200 bg-white p-3">
-                  <div className="text-slate-500">{k}</div><div className="text-lg font-bold text-slate-900">{v as number}/5</div>
+                <div key={k} className="rc-panel" style={{ padding: 12 }}>
+                  <div style={{ color: "var(--rc-dim)" }}>{k}</div><div className="rc-mono text-lg font-bold" style={{ color: "var(--rc-fg)" }}>{v as number}/5</div>
                 </div>))}
             </div>
-            <div className="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-700">
-              <div className="mb-2 font-semibold text-slate-900">Loan Terms</div>
+            <div className="rc-panel text-sm" style={{ color: "var(--rc-fg)" }}>
+              <div className="rc-panel-title" style={{ marginBottom: 12 }}>Loan Terms</div>
               <div className="grid grid-cols-2 gap-y-1">
-                <span>Final loan amount</span><span className="text-right font-medium">₹{score.loan_terms.finalLoanAmtInr.toLocaleString("en-IN")}</span>
-                <span>Interest rate</span><span className="text-right font-medium">{score.loan_terms.interestRatePct}%</span>
-                <span>Tenure</span><span className="text-right font-medium">{score.loan_terms.tenureMonths} mo</span>
-                <span>Monthly EMI</span><span className="text-right font-medium">₹{score.loan_terms.monthlyEmiInr.toLocaleString("en-IN")}</span>
-                <span>Weekly collection</span><span className="text-right font-medium">₹{score.loan_terms.weeklyEmiInr.toLocaleString("en-IN")}</span>
-                <span>Disbursement</span><span className="text-right font-medium">₹{score.loan_terms.disbursementInr.toLocaleString("en-IN")}</span>
-                <span>Collateral required</span><span className="text-right font-medium">{score.loan_terms.collateralRequired ? "Yes" : "No"}</span>
+                <span style={{ color: "var(--rc-dim)" }}>Final loan amount</span><span className="rc-mono text-right font-medium">₹{score.loan_terms.finalLoanAmtInr.toLocaleString("en-IN")}</span>
+                <span style={{ color: "var(--rc-dim)" }}>Interest rate</span><span className="rc-mono text-right font-medium">{score.loan_terms.interestRatePct}%</span>
+                <span style={{ color: "var(--rc-dim)" }}>Tenure</span><span className="rc-mono text-right font-medium">{score.loan_terms.tenureMonths} mo</span>
+                <span style={{ color: "var(--rc-dim)" }}>Monthly EMI</span><span className="rc-mono text-right font-medium">₹{score.loan_terms.monthlyEmiInr.toLocaleString("en-IN")}</span>
+                <span style={{ color: "var(--rc-dim)" }}>Weekly collection</span><span className="rc-mono text-right font-medium">₹{score.loan_terms.weeklyEmiInr.toLocaleString("en-IN")}</span>
+                <span style={{ color: "var(--rc-dim)" }}>Disbursement</span><span className="rc-mono text-right font-medium">₹{score.loan_terms.disbursementInr.toLocaleString("en-IN")}</span>
+                <span style={{ color: "var(--rc-dim)" }}>Collateral required</span><span className="rc-mono text-right font-medium">{score.loan_terms.collateralRequired ? "Yes" : "No"}</span>
               </div>
             </div>
-            <div className="rounded-xl border border-slate-200 bg-white p-4 text-xs text-slate-600">
-              <div className="mb-1 font-semibold text-slate-900">Data Provenance</div>
-              Avg sales & QoQ growth: <b>derived from reconciliation</b> (DIS {recon?.integrity?.dis}, {recon?.integrity?.band}). Margin, location, ambience, CIBIL: analyst-entered.
+            <div className="rc-panel text-xs" style={{ color: "var(--rc-dim)" }}>
+              <div className="rc-panel-title" style={{ marginBottom: 8 }}>Data Provenance</div>
+              Avg sales & QoQ growth: <b style={{ color: "var(--rc-fg)" }}>derived from reconciliation</b> (DIS {recon?.integrity?.dis}, {recon?.integrity?.band}). Margin, location, ambience, CIBIL: analyst-entered.
             </div>
-            <button onClick={() => { setStep(0); setScore(null); setRecon(null); }} className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 font-medium text-slate-700">Start new underwrite</button>
+            <button onClick={() => { setStep(0); setScore(null); setRecon(null); }} className="rc-btn rc-btn-ghost">Start new underwrite</button>
           </div>
         )}
 
@@ -360,10 +370,10 @@ export default function UnderwriteFlow() {
         {step < 2 && (
           <div className="mt-4 flex justify-between">
             <button onClick={() => setStep((s) => Math.max(0, s - 1))} disabled={step === 0}
-              className="rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-600 disabled:opacity-30">← Back</button>
+              className="rc-btn rc-btn-ghost" style={{ width: "auto", padding: "10px 16px", fontSize: 14 }}>← Back</button>
             {step === 0 && (
               <button onClick={goFromIdentity} disabled={!canNext || exhaustBusy}
-                className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-40">{exhaustBusy ? "Fetching…" : "Next →"}</button>
+                className="rc-btn" style={{ width: "auto", padding: "10px 16px", fontSize: 14 }}>{exhaustBusy ? "Fetching…" : "Next →"}</button>
             )}
           </div>
         )}

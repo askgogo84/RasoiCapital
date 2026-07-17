@@ -1,18 +1,18 @@
 'use client'
 import { useState, useEffect } from 'react'
 
-const STATUS_COLORS: Record<string, string> = {
-  submitted: 'bg-blue-100 text-blue-700',
-  under_review: 'bg-amber-100 text-amber-700',
-  approved: 'bg-green-100 text-green-700',
-  conditionally_approved: 'bg-yellow-100 text-yellow-700',
-  rejected: 'bg-red-100 text-red-700',
-  disbursed: 'bg-emerald-100 text-emerald-700',
-  draft: 'bg-slate-100 text-slate-500',
+const STATUS_CHIP: Record<string, string> = {
+  submitted: 'current',
+  under_review: 'soft',
+  approved: 'current',
+  conditionally_approved: 'soft',
+  rejected: 'hard',
+  disbursed: 'current',
+  draft: 'man',
 }
 
 const BUCKET_COLORS: Record<string, string> = {
-  G: 'badge-G', C: 'badge-C', P: 'badge-P'
+  G: 'current', C: 'soft', P: 'hard'
 }
 
 export default function ApplicationsPage() {
@@ -33,12 +33,10 @@ export default function ApplicationsPage() {
     <div>
       <div className="mb-5 flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-xl font-bold text-slate-800">Loan Applications</h1>
-          <p className="text-sm text-slate-500">Review, approve and disburse</p>
+          <h1 className="text-xl font-bold" style={{ color: 'var(--rc-fg)' }}>Loan Applications</h1>
+          <p className="rc-eyebrow" style={{ marginTop: 4 }}>Review, approve and disburse</p>
         </div>
-        <a href="/underwrite"
-           className="px-4 py-2 rounded-lg text-white text-sm font-medium"
-           style={{ background: '#0D1F3C' }}>
+        <a href="/underwrite" className="rc-btn" style={{ width: 'auto', padding: '10px 16px', fontSize: 14 }}>
           + New Assessment
         </a>
       </div>
@@ -47,73 +45,67 @@ export default function ApplicationsPage() {
       <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
         {['all','submitted','under_review','approved','disbursed','rejected'].map(s => (
           <button key={s} onClick={() => setFilter(s)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap border transition-colors ${
-                    filter === s
-                      ? 'bg-slate-800 text-white border-slate-800'
-                      : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
-                  }`}>
+                  className={filter === s ? 'rc-btn' : 'rc-btn rc-btn-ghost'}
+                  style={{ width: 'auto', padding: '6px 12px', fontSize: 12, whiteSpace: 'nowrap' }}>
             {s.replace('_', ' ')}
           </button>
         ))}
       </div>
 
       {loading && (
-        <div className="text-center py-12 text-slate-400">Loading applications…</div>
+        <div className="text-center py-12" style={{ color: 'var(--rc-dim)' }}>Loading applications…</div>
       )}
 
       {!loading && filtered.length === 0 && (
-        <div className="bg-white rounded-xl border border-slate-200 p-12 text-center">
+        <div className="rc-panel text-center" style={{ padding: 48 }}>
           <div className="text-4xl mb-3">📋</div>
-          <div className="font-semibold text-slate-600 mb-1">No applications yet</div>
-          <p className="text-sm text-slate-400">Run an underwriting assessment and submit an application to see it here.</p>
-          <a href="/underwrite" className="inline-block mt-4 px-4 py-2 rounded-lg text-white text-sm font-medium"
-             style={{ background: '#028090' }}>
+          <div className="font-semibold mb-1" style={{ color: 'var(--rc-fg)' }}>No applications yet</div>
+          <p className="text-sm" style={{ color: 'var(--rc-dim)' }}>Run an underwriting assessment and submit an application to see it here.</p>
+          <a href="/underwrite" className="rc-btn inline-block mt-4" style={{ width: 'auto', padding: '10px 16px', fontSize: 14 }}>
             Run Underwriting
           </a>
         </div>
       )}
 
       {!loading && filtered.length > 0 && (
-        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="rc-panel" style={{ padding: 0, overflow: 'hidden' }}>
+          <table className="rc-table">
             <thead>
-              <tr className="border-b border-slate-200">
+              <tr>
                 {['App No.','Outlet','City','Score','Bucket','Amount','Status','Date'].map(h => (
-                  <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                    {h}
-                  </th>
+                  <th key={h}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {filtered.map((app, i) => (
-                <tr key={app.id} className={`border-b border-slate-100 hover:bg-slate-50 ${i % 2 === 0 ? '' : 'bg-slate-50/30'}`}>
-                  <td className="px-4 py-3 font-mono text-xs text-indigo-600">{app.application_number}</td>
-                  <td className="px-4 py-3 font-medium text-slate-800">{app.outlet?.outlet_name || '—'}</td>
-                  <td className="px-4 py-3 text-slate-500">{app.outlet?.city || '—'}</td>
-                  <td className="px-4 py-3 font-bold" style={{ color: app.score_run?.composite_score >= 4 ? '#02C39A' : app.score_run?.composite_score >= 3.5 ? '#D97706' : '#DC2626' }}>
+              {filtered.map((app) => (
+                <tr key={app.id}>
+                  <td className="rc-mono" style={{ color: 'var(--rc-cyan)', fontSize: 12 }}>{app.application_number}</td>
+                  <td className="font-medium" style={{ color: 'var(--rc-fg)' }}>{app.outlet?.outlet_name || '—'}</td>
+                  <td style={{ color: 'var(--rc-dim)' }}>{app.outlet?.city || '—'}</td>
+                  <td className="rc-mono font-bold" style={{ color: app.score_run?.composite_score >= 4 ? 'var(--rc-lime)' : app.score_run?.composite_score >= 3.5 ? 'var(--rc-amber)' : 'var(--rc-red)' }}>
                     {app.score_run?.composite_score || '—'}
                   </td>
-                  <td className="px-4 py-3">
+                  <td>
                     {app.score_run?.bucket && (
-                      <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${BUCKET_COLORS[app.score_run.bucket]}`}>
+                      <span className={`rc-chip ${BUCKET_COLORS[app.score_run.bucket]}`}>
                         {app.score_run.bucket}
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-3 font-medium">
+                  <td className="rc-mono font-medium" style={{ color: 'var(--rc-fg)' }}>
                     {app.score_run?.eligible_loan_amt_inr
                       ? `₹${(app.score_run.eligible_loan_amt_inr/100000).toFixed(1)}L`
                       : app.requested_amount_inr
                       ? `₹${(app.requested_amount_inr/100000).toFixed(1)}L`
                       : '—'}
                   </td>
-                  <td className="px-4 py-3">
-                    <span className={`text-xs font-medium px-2 py-1 rounded-full ${STATUS_COLORS[app.status] || 'bg-slate-100 text-slate-500'}`}>
+                  <td>
+                    <span className={`rc-chip ${STATUS_CHIP[app.status] || 'man'}`}>
                       {app.status?.replace('_', ' ')}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-xs text-slate-400">
+                  <td className="rc-mono" style={{ color: 'var(--rc-dim)', fontSize: 12 }}>
                     {app.created_at ? new Date(app.created_at).toLocaleDateString('en-IN') : '—'}
                   </td>
                 </tr>
