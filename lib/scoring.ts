@@ -71,6 +71,7 @@ export interface ScoringInput {
   ambienceAvg:      number   // 0-3
   cibilScore:       number
   cycleNumber?:     number   // default 1
+  tenureMonths?:    number   // default 24 (editable per loan)
 }
 
 export interface ScoringResult {
@@ -95,7 +96,7 @@ export interface ScoringResult {
     collateralRequired: boolean
     monthlyMarginInr:   number
     monthlyEmiInr:      number
-    dailyEmiInr:        number
+    weeklyEmiInr:       number
     rawLoanAmtInr:      number
     finalLoanAmtInr:    number
     processingFeeInr:   number
@@ -106,6 +107,7 @@ export interface ScoringResult {
 
 export function runScoring(input: ScoringInput): ScoringResult {
   const cycle = input.cycleNumber || 1
+  const requestedTenure = input.tenureMonths && input.tenureMonths > 0 ? input.tenureMonths : 24
   const marginPct = OUTLET_MARGINS[input.outletCategory] || 27
 
   const factors = {
@@ -163,9 +165,11 @@ export function runScoring(input: ScoringInput): ScoringResult {
 
   const belowPar = compositeScore < 3.0
   const monthlyMarginInr = (input.avgMonthlySalesInr * marginPct) / 100
+  // Tenure: use the requested/editable value (default 24 mo). A rejected loan stays 0.
+  const effectiveTenure = tenureMonths === 0 ? 0 : requestedTenure
   const monthlyEmiInr = monthlyMarginInr * (emiPctOfMargin / 100)
-  const dailyEmiInr = Math.round(monthlyEmiInr / 30)
-  const rawLoanAmtInr = monthlyEmiInr * tenureMonths
+  const weeklyEmiInr = Math.round(monthlyEmiInr / 4.33)
+  const rawLoanAmtInr = monthlyEmiInr * effectiveTenure
   const loanCap = cycle === 1 ? 300000 : cycle === 2 ? 700000 : rawLoanAmtInr
   const finalLoanAmtInr = Math.min(rawLoanAmtInr, loanCap)
   const processingFeeInr = finalLoanAmtInr * (processingFeePct / 100)
@@ -174,10 +178,11 @@ export function runScoring(input: ScoringInput): ScoringResult {
   return {
     factors, compositeScore, marginPct, bucket, bucketLabel, decision,
     loanTerms: {
-      interestRatePct, processingFeePct, emiPctOfMargin, tenureMonths,
+      interestRatePct, processingFeePct, emiPctOfMargin,
+      tenureMonths: effectiveTenure,
       collateralRequired, monthlyMarginInr,
       monthlyEmiInr: Math.round(monthlyEmiInr),
-      dailyEmiInr,
+      weeklyEmiInr,
       rawLoanAmtInr: Math.round(rawLoanAmtInr),
       finalLoanAmtInr: Math.round(finalLoanAmtInr),
       processingFeeInr: Math.round(processingFeeInr),
