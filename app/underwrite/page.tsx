@@ -1,444 +1,373 @@
-'use client'
-import { useState } from 'react'
+// app/underwrite/flow/page.tsx
+// Phase 3 — the real underwrite flow: Identity → Documents → Reconciliation → Score → Decision.
+// Chains the Phase 1 parse API, Phase 2 reconcile API, and the derived-scoring API.
+// Light theme, mobile-first (375px baseline). Replaces the two throwaway test pages for demo use.
+"use client";
 
-const BUCKET_CONFIG = {
-  G: { label: 'Good — Auto Approve',          cls: 'badge-G', bg: '#DCFCE7', text: '#166534' },
-  C: { label: 'Consider — With Conditions',   cls: 'badge-C', bg: '#FEF9C3', text: '#854d0e' },
-  P: { label: 'Pause — Manual Review',        cls: 'badge-P', bg: '#FEF2F2', text: '#991b1b' },
-}
+import { useState } from "react";
 
-const FACTOR_LABELS: Record<string, string> = {
-  margin: 'Outlet Margin (30%)', qqGrowth: 'Sales Trend (30%)',
-  avgSales: 'Avg Sales Volume (20%)', location: 'Location (10%)',
-  ambience: 'Ambience (5%)', cibil: 'CIBIL Score (5%)',
-}
+type Provenance = "DERIVED" | "MANUAL" | "MANUAL_OVERRIDE" | "ASSUMED";
+type DocState = "idle" | "uploading" | "parsing" | "parsed" | "failed";
 
-function scoreColor(s: number) {
-  if (s >= 4.5) return '#02C39A'
-  if (s >= 3.5) return '#16a34a'
-  if (s >= 2.5) return '#D97706'
-  if (s >= 1.5) return '#f97316'
-  return '#DC2626'
-}
+interface DocRow { type: "bank_statement" | "zomato_payout" | "swiggy_payout"; label: string; state: DocState; detail?: string; }
 
-export default function UnderwritePage() {
-  const [form, setForm] = useState({
-    outletName: '', outletType: '', city: 'Bengaluru',
-    outletCategory: '', avgMonthlySalesInr: '', qqGrowthPct: '',
-    locationCode: '', cibilScore: '', ambiencePos: '0', ambienceAvg: '0',
-    cycleNumber: '1', loanPurpose: '', ownerExperienceYrs: '',
-    leaseMonthsRemaining: '', foirLevel: '',
-  })
-  const [result, setResult] = useState<any>(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [view, setView] = useState<'cm' | 'fsa'>('cm')
+const STEPS = ["Identity", "Documents", "Reconciliation", "Score", "Decision"] as const;
 
-  const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }))
+export default function UnderwriteFlow() {
+  const [step, setStep] = useState(0);
+  const [outlet, setOutlet] = useState("");
+  const [city, setCity] = useState("Bengaluru");
 
-  async function runAnalysis() {
-    if (!form.outletCategory || !form.avgMonthlySalesInr || !form.locationCode || !form.cibilScore) {
-      setError('Fill in outlet category, sales, location, and CIBIL score to continue.')
-      return
-    }
-    setError('')
-    setLoading(true)
-    setResult(null)
+  // documents
+  const [docs, setDocs] = useState<DocRow[]>([
+    { type: "bank_statement", label: "Bank statement (12 mo)", state: "idle" },
+    { type: "zomato_payout", label: "Zomato payout (6 mo)", state: "idle" },
+  ]);
+
+  // reconciliation
+  const [recon, setRecon] = useState<any>(null);
+  const [reconBusy, setReconBusy] = useState(false);
+
+  // digital exhaust (Phase 5)
+  const [exhaust, setExhaust] = useState<any>(null);
+  const [exhaustBusy, setExhaustBusy] = useState(false);
+  // existing parsed docs (resume without re-uploading)
+  const [existingDocs, setExistingDocs] = useState<string[]>([]);
+
+  // score inputs (manual)
+  const [outletCategory, setOutletCategory] = useState("B");
+  const [locationCode, setLocationCode] = useState("B");
+  const [ambiencePos, setAmbiencePos] = useState(2);
+  const [ambienceAvg, setAmbienceAvg] = useState(1);
+  const [cibilScore, setCibilScore] = useState(740);
+  const [cycleNumber, setCycleNumber] = useState(1);
+  const [tenureMonths, setTenureMonths] = useState(24);
+  // score inputs (derived, overridable)
+  const [avgSales, setAvgSales] = useState<number | "">("");
+  const [qqGrowth, setQqGrowth] = useState<number | "">("");
+  const [salesProv, setSalesProv] = useState<Provenance>("MANUAL");
+  const [growthProv, setGrowthProv] = useState<Provenance>("MANUAL");
+  const [catProv, setCatProv] = useState<Provenance>("MANUAL");
+  const [locProv, setLocProv] = useState<Provenance>("MANUAL");
+  const [ambProv, setAmbProv] = useState<Provenance>("MANUAL");
+
+  const [score, setScore] = useState<any>(null);
+  const [scoreBusy, setScoreBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  const bandColor = (b: string) => (b === "TRUSTED" ? "#059669" : b === "REVIEW" ? "#d97706" : "#dc2626");
+  const bucketColor = (b: string) => (b === "G" ? "#059669" : b === "C" ? "#d97706" : "#dc2626");
+
+  async function goFromIdentity() {
+    setErr(null); setExhaustBusy(true);
     try {
-      const res = await fetch('/api/score/run', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      })
-      const data = await res.json()
-      if (!data.success) throw new Error(data.error)
-      setResult(data)
+      // fetch digital-exhaust pre-score (auto-fills ambience/menu/location)
+      const exRes = await fetch("/api/exhaust", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ outlet_name: outlet.trim(), city: city.trim() }),
+      });
+      const ex = await exRes.json();
+      if (exRes.ok) {
+        setExhaust(ex);
+        if (ex.derived?.menu_category?.category) { setOutletCategory(ex.derived.menu_category.category); setCatProv("DERIVED"); }
+        if (ex.derived?.location?.code) { setLocationCode(ex.derived.location.code); setLocProv("DERIVED"); }
+        if (ex.derived?.ambience) {
+          if (typeof ex.derived.ambience.pos === "number") setAmbiencePos(ex.derived.ambience.pos);
+          if (typeof ex.derived.ambience.avg === "number") setAmbienceAvg(ex.derived.ambience.avg);
+          setAmbProv("DERIVED");
+        }
+      }
+      // check for already-parsed docs so analyst can resume without re-uploading
+      const dsRes = await fetch(`/api/docs-status?outlet_name=${encodeURIComponent(outlet.trim())}`);
+      const ds = await dsRes.json();
+      if (dsRes.ok && ds.has_any) {
+        setExistingDocs(ds.existing.map((e: any) => e.doc_type));
+        setDocs((d) => d.map((r) => ds.existing.some((e: any) => e.doc_type === r.type)
+          ? { ...r, state: "parsed", detail: "already on file" } : r));
+      }
     } catch (e: any) {
-      setError(e.message)
+      setErr(String(e?.message ?? e));
     } finally {
-      setLoading(false)
+      setExhaustBusy(false);
+      setStep(1);
     }
   }
 
-  const sc = result?.scoring
-  const ai = result?.aiNarrative
+  async function uploadDoc(idx: number, file: File) {
+    setErr(null);
+    setDocs((d) => d.map((r, i) => (i === idx ? { ...r, state: "uploading" } : r)));
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("doc_type", docs[idx].type);
+      fd.append("outlet_name", outlet.trim());
+      setDocs((d) => d.map((r, i) => (i === idx ? { ...r, state: "parsing" } : r)));
+      const res = await fetch("/api/parse", { method: "POST", body: fd });
+      const j = await res.json();
+      if (!res.ok || j.manual_fallback) {
+        setDocs((d) => d.map((r, i) => (i === idx ? { ...r, state: "failed", detail: j.detail ?? "parse failed" } : r)));
+        return;
+      }
+      const detail = docs[idx].type === "bank_statement"
+        ? `${j.txn_count} txns · ${Math.round((j.confidence ?? 0) * 100)}%`
+        : `${j.settlement_count} settlements · ${Math.round((j.confidence ?? 0) * 100)}%`;
+      setDocs((d) => d.map((r, i) => (i === idx ? { ...r, state: "parsed", detail } : r)));
+    } catch (e: any) {
+      setDocs((d) => d.map((r, i) => (i === idx ? { ...r, state: "failed", detail: String(e?.message ?? e) } : r)));
+    }
+  }
+
+  async function runReconcile() {
+    setReconBusy(true); setErr(null);
+    try {
+      const res = await fetch("/api/reconcile", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ outlet_name: outlet.trim() }),
+      });
+      const j = await res.json();
+      if (!res.ok) { setErr(JSON.stringify(j)); return; }
+      setRecon(j);
+      // auto-fill derived score inputs
+      if (typeof j.derived?.avg_monthly_sales === "number") { setAvgSales(j.derived.avg_monthly_sales); setSalesProv("DERIVED"); }
+      if (typeof j.derived?.qq_growth_pct === "number") { setQqGrowth(j.derived.qq_growth_pct); setGrowthProv("DERIVED"); }
+      setStep(2);
+    } catch (e: any) { setErr(String(e?.message ?? e)); }
+    finally { setReconBusy(false); }
+  }
+
+  async function runScore() {
+    setScoreBusy(true); setErr(null);
+    try {
+      const provenance: Record<string, Provenance> = {
+        avgMonthlySales: salesProv, qqGrowth: growthProv,
+        margin: catProv, location: locProv, ambience: ambProv, cibil: "MANUAL",
+      };
+      const res = await fetch("/api/score-derived", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          outlet_name: outlet.trim(),
+          reconciliation_id: recon?.reconciliation_id ?? null,
+          outletCategory, locationCode, ambiencePos, ambienceAvg, cibilScore, cycleNumber, tenureMonths,
+          avgMonthlySalesInr: Number(avgSales) || 0,
+          qqGrowthPct: Number(qqGrowth) || 0,
+          provenance,
+          disBand: recon?.integrity?.band ?? null,
+        }),
+      });
+      const j = await res.json();
+      if (!res.ok) { setErr(JSON.stringify(j)); return; }
+      setScore(j); setStep(4);
+    } catch (e: any) { setErr(String(e?.message ?? e)); }
+    finally { setScoreBusy(false); }
+  }
+
+  const Badge = ({ p }: { p: Provenance }) => {
+    const map: Record<Provenance, [string, string]> = {
+      DERIVED: ["#059669", "DERIVED"], MANUAL: ["#64748b", "MANUAL"],
+      MANUAL_OVERRIDE: ["#d97706", "OVERRIDE"], ASSUMED: ["#94a3b8", "ASSUMED"],
+    };
+    const [c, t] = map[p];
+    return <span className="ml-2 rounded px-1.5 py-0.5 text-[10px] font-semibold" style={{ color: c, border: `1px solid ${c}` }}>{t}</span>;
+  };
+
+  const canNext = step === 0 ? outlet.trim().length > 0
+    : step === 1 ? docs.some((d) => d.state === "parsed")
+    : true;
 
   return (
-    <div>
-      <div className="mb-5 flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h1 className="text-xl font-bold text-slate-800">AI Underwriting Tool</h1>
-          <p className="text-sm text-slate-500">6-factor credit scoring · Bucket decision · Claude risk narrative</p>
+    <div className="min-h-screen bg-slate-50 px-4 py-6">
+      <div className="mx-auto w-full max-w-3xl">
+        {/* Stepper */}
+        <div className="mb-6 flex items-center justify-between">
+          {STEPS.map((s, i) => (
+            <div key={s} className="flex flex-1 items-center">
+              <div className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold ${i <= step ? "bg-slate-900 text-white" : "bg-slate-200 text-slate-500"}`}>{i + 1}</div>
+              <span className={`ml-2 hidden text-xs sm:inline ${i <= step ? "text-slate-900" : "text-slate-400"}`}>{s}</span>
+              {i < STEPS.length - 1 && <div className={`mx-2 h-0.5 flex-1 ${i < step ? "bg-slate-900" : "bg-slate-200"}`} />}
+            </div>
+          ))}
         </div>
-        {result && (
-          <div className="flex gap-2">
-            {(['cm','fsa'] as const).map(v => (
-              <button key={v} onClick={() => setView(v)}
-                      className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
-                        view === v ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
-                      }`}>
-                {v === 'cm' ? 'Credit Manager' : 'FSA Lite View'}
-              </button>
-            ))}
+
+        {err && <pre className="mb-4 overflow-auto rounded-lg border border-red-300 bg-red-50 p-3 text-xs text-red-800">{err}</pre>}
+
+        {/* Step 0 — Identity */}
+        {step === 0 && (
+          <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-6">
+            <h2 className="text-lg font-bold text-slate-900">Outlet Identity</h2>
+            <label className="block text-sm font-medium text-slate-700">Outlet name
+              <input value={outlet} onChange={(e) => setOutlet(e.target.value)} placeholder="e.g. Green Leaf Cafe"
+                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-3 text-slate-900" /></label>
+            <label className="block text-sm font-medium text-slate-700">City
+              <input value={city} onChange={(e) => setCity(e.target.value)}
+                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-3 text-slate-900" /></label>
           </div>
         )}
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-
-        {/* ── Input Form ── */}
-        <div className="bg-white rounded-xl border border-slate-200 p-5">
-          <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">
-            Outlet Information
-          </div>
-
-          <div className="grid grid-cols-2 gap-3 mb-3">
-            <div>
-              <label className="text-xs font-medium text-slate-600 block mb-1">Outlet Name</label>
-              <input className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm"
-                     placeholder="Spice Garden" value={form.outletName}
-                     onChange={e => set('outletName', e.target.value)}/>
-            </div>
-            <div>
-              <label className="text-xs font-medium text-slate-600 block mb-1">City</label>
-              <select className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm"
-                      value={form.city} onChange={e => set('city', e.target.value)}>
-                {['Bengaluru','Mumbai','Delhi NCR','Hyderabad','Chennai','Pune'].map(c =>
-                  <option key={c}>{c}</option>
-                )}
-              </select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3 mb-3">
-            <div>
-              <label className="text-xs font-medium text-slate-600 block mb-1">
-                Menu Category <span className="text-slate-400">(pricing tier)</span>
-              </label>
-              <select className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm"
-                      value={form.outletCategory} onChange={e => set('outletCategory', e.target.value)}>
-                <option value="">Select</option>
-                <option value="A">Cat A — Premium (margin 35%)</option>
-                <option value="B">Cat B — Mid-premium (32%)</option>
-                <option value="C">Cat C — Mid-range (27%)</option>
-                <option value="D">Cat D — Value market (24%)</option>
-              </select>
-            </div>
-            <div>
-              <label className="text-xs font-medium text-slate-600 block mb-1">Location Type</label>
-              <select className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm"
-                      value={form.locationCode} onChange={e => set('locationCode', e.target.value)}>
-                <option value="">Select</option>
-                <option value="A">A — Strong captive (IT park / mall)</option>
-                <option value="B">B — High street</option>
-                <option value="C">C — Captive audience</option>
-                <option value="D">D — Main road</option>
-                <option value="E">E — Others / low footfall</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-3 mb-3">
-            <div>
-              <label className="text-xs font-medium text-slate-600 block mb-1">Avg Monthly Sales</label>
-              <div className="relative">
-                <input type="number" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm pr-6"
-                       placeholder="7.5" value={form.avgMonthlySalesInr}
-                       onChange={e => set('avgMonthlySalesInr', e.target.value)}/>
-                <span className="absolute right-2 top-2.5 text-xs text-slate-400">₹L</span>
+        {/* Step 1 — Documents */}
+        {step === 1 && (
+          <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-6">
+            <h2 className="text-lg font-bold text-slate-900">Documents — {outlet}</h2>
+            {existingDocs.length > 0 && (
+              <div className="rounded-lg bg-emerald-50 px-3 py-2 text-xs text-emerald-800">
+                ✓ {existingDocs.length} document(s) already on file for this outlet — you can reconcile without re-uploading, or upload fresh copies to replace.
               </div>
-            </div>
-            <div>
-              <label className="text-xs font-medium text-slate-600 block mb-1">Q-Q Growth</label>
-              <div className="relative">
-                <input type="number" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm pr-5"
-                       placeholder="12" value={form.qqGrowthPct}
-                       onChange={e => set('qqGrowthPct', e.target.value)}/>
-                <span className="absolute right-2 top-2.5 text-xs text-slate-400">%</span>
+            )}
+            {exhaust && (
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                <div className="mb-1 flex items-center justify-between">
+                  <span className="text-xs font-semibold text-slate-700">Digital exhaust pre-score</span>
+                  <span className="rounded bg-slate-900 px-2 py-0.5 text-xs font-bold text-white">{exhaust.prescore} / 5</span>
+                </div>
+                <div className="text-[11px] text-slate-500">
+                  {exhaust.signals?.rating}★ · Cat {exhaust.derived?.menu_category?.category} · Loc {exhaust.derived?.location?.code} · scored before any document upload
+                </div>
+                <div className="mt-1 text-[10px] italic text-slate-400">Demo Mode — live Google Places feed connects on go-live.</div>
               </div>
-            </div>
-            <div>
-              <label className="text-xs font-medium text-slate-600 block mb-1">CIBIL Score</label>
-              <input type="number" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm"
-                     placeholder="740" value={form.cibilScore}
-                     onChange={e => set('cibilScore', e.target.value)}/>
-            </div>
-          </div>
-
-          <div className="mb-3">
-            <label className="text-xs font-medium text-slate-600 block mb-2">
-              Ambience Assessment <span className="text-slate-400">(FSA observation)</span>
-            </label>
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <div className="text-xs text-slate-500 mb-1">Positive factors (décor / seating / hygiene)</div>
-                <select className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm"
-                        value={form.ambiencePos} onChange={e => set('ambiencePos', e.target.value)}>
-                  <option value="0">0 positive</option>
-                  <option value="1">1 positive</option>
-                  <option value="2">2 positive</option>
-                  <option value="3">3 positive</option>
-                </select>
-              </div>
-              <div>
-                <div className="text-xs text-slate-500 mb-1">Average factors</div>
-                <select className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm"
-                        value={form.ambienceAvg} onChange={e => set('ambienceAvg', e.target.value)}>
-                  <option value="0">0 average</option>
-                  <option value="1">1 average</option>
-                  <option value="2">2 average</option>
-                  <option value="3">3 average</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 mt-4">
-            Additional Risk Signals
-          </div>
-          <div className="grid grid-cols-2 gap-3 mb-3">
-            <div>
-              <label className="text-xs font-medium text-slate-600 block mb-1">Loan Purpose</label>
-              <select className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm"
-                      value={form.loanPurpose} onChange={e => set('loanPurpose', e.target.value)}>
-                <option value="">Select</option>
-                <option>Outlet refurbishment</option>
-                <option>Equipment purchase</option>
-                <option>Working capital</option>
-                <option>Raw material</option>
-                <option>Staff costs</option>
-              </select>
-            </div>
-            <div>
-              <label className="text-xs font-medium text-slate-600 block mb-1">Loan Cycle</label>
-              <select className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm"
-                      value={form.cycleNumber} onChange={e => set('cycleNumber', e.target.value)}>
-                <option value="1">1st loan (cap ₹3L)</option>
-                <option value="2">2nd loan (cap ₹7L)</option>
-                <option value="3">3rd loan + (no cap)</option>
-              </select>
-            </div>
-            <div>
-              <label className="text-xs font-medium text-slate-600 block mb-1">Owner Experience</label>
-              <select className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm"
-                      value={form.ownerExperienceYrs} onChange={e => set('ownerExperienceYrs', e.target.value)}>
-                <option value="">Select</option>
-                <option value="5+">5+ years</option>
-                <option value="2-5">2–5 years</option>
-                <option value="1-2">1–2 years</option>
-                <option value="first">First-time operator</option>
-              </select>
-            </div>
-            <div>
-              <label className="text-xs font-medium text-slate-600 block mb-1">Existing Loan (FOIR)</label>
-              <select className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm"
-                      value={form.foirLevel} onChange={e => set('foirLevel', e.target.value)}>
-                <option value="">Select</option>
-                <option value="none">None</option>
-                <option value="low">Low (&lt;30%)</option>
-                <option value="mid">Medium (30–50%)</option>
-                <option value="high">High (&gt;50%)</option>
-              </select>
-            </div>
-          </div>
-
-          {error && (
-            <div className="mb-3 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
-              {error}
-            </div>
-          )}
-
-          <button onClick={runAnalysis} disabled={loading}
-                  className="w-full py-3 rounded-xl text-white font-semibold text-sm transition-opacity
-                             hover:opacity-90 disabled:opacity-60"
-                  style={{ background: '#0D1F3C' }}>
-            {loading ? (
-              <span className="flex items-center justify-center gap-2">
-                <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                </svg>
-                Running AI Assessment…
-              </span>
-            ) : 'Analyse & Underwrite →'}
-          </button>
-        </div>
-
-        {/* ── Results ── */}
-        <div>
-          {!result && !loading && (
-            <div className="bg-white rounded-xl border border-slate-200 p-8 text-center h-full flex flex-col items-center justify-center">
-              <div className="text-4xl mb-3">🧠</div>
-              <div className="font-semibold text-slate-700 mb-1">Ready to assess</div>
-              <div className="text-sm text-slate-400 max-w-xs">
-                Fill in outlet details and click Analyse to run the full 6-factor AI underwriting.
-              </div>
-            </div>
-          )}
-
-          {loading && (
-            <div className="bg-white rounded-xl border border-slate-200 p-8 text-center h-full flex flex-col items-center justify-center">
-              <div className="text-4xl mb-3 animate-pulse">⚙️</div>
-              <div className="font-semibold text-slate-700 mb-1">Running assessment…</div>
-              <div className="text-sm text-slate-400">Scoring engine + Claude risk narrative</div>
-            </div>
-          )}
-
-          {sc && view === 'cm' && (
-            <div className="space-y-4">
-              {/* Score card */}
-              <div className="bg-white rounded-xl border border-slate-200 p-5">
-                <div className="flex items-start justify-between gap-4">
+            )}
+            {docs.map((d, i) => (
+              <div key={d.type} className="rounded-lg border border-dashed border-slate-300 p-4">
+                <div className="flex items-center justify-between">
                   <div>
-                    <div className="font-bold text-slate-800 text-base">{form.outletName || 'Outlet'}</div>
-                    <div className="text-xs text-slate-400 mt-0.5">{form.outletType} · {form.city}</div>
-                    <div className="mt-2">
-                      <span className={`text-xs font-bold px-3 py-1 rounded-full ${sc.bucket === 'G' ? 'badge-G' : sc.bucket === 'C' ? 'badge-C' : 'badge-P'}`}>
-                        {BUCKET_CONFIG[sc.bucket as 'G'|'C'|'P'].label}
-                      </span>
+                    <div className="text-sm font-medium text-slate-800">{d.label}</div>
+                    <div className="text-xs" style={{ color: d.state === "parsed" ? "#059669" : d.state === "failed" ? "#dc2626" : "#64748b" }}>
+                      {d.state === "idle" ? "Not uploaded" : d.state === "uploading" ? "Uploading…" : d.state === "parsing" ? "Parsing… (bank statements take 1–3 min)" : d.state === "parsed" ? `✓ ${d.detail}` : `✗ ${d.detail}`}
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-4xl font-bold" style={{ color: scoreColor(sc.compositeScore) }}>
-                      {sc.compositeScore}
-                    </div>
-                    <div className="text-xs text-slate-400">/ 5.0</div>
-                  </div>
-                </div>
-
-                {/* Factor bars */}
-                <div className="mt-4 space-y-2">
-                  {Object.entries(sc.factors).map(([k, v]: any) => (
-                    <div key={k} className="flex items-center gap-3">
-                      <div className="text-xs text-slate-500 w-40 flex-shrink-0">{FACTOR_LABELS[k]}</div>
-                      <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
-                        <div className="h-full rounded-full transition-all"
-                             style={{ width: `${(v/5)*100}%`, background: scoreColor(v) }}/>
-                      </div>
-                      <div className="text-xs font-semibold w-8 text-right" style={{ color: scoreColor(v) }}>
-                        {v}/5
-                      </div>
-                    </div>
-                  ))}
+                  <label className="cursor-pointer rounded-lg bg-slate-900 px-3 py-2 text-xs font-medium text-white">
+                    Choose PDF
+                    <input type="file" accept="application/pdf" className="hidden"
+                      onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadDoc(i, f); }} />
+                  </label>
                 </div>
               </div>
+            ))}
+            <button onClick={runReconcile} disabled={reconBusy || !docs.some((d) => d.state === "parsed")}
+              className="w-full rounded-lg bg-emerald-600 px-4 py-3 font-medium text-white disabled:opacity-40">
+              {reconBusy ? "Reconciling…" : "Reconcile & Continue →"}
+            </button>
+          </div>
+        )}
 
-              {/* Loan terms */}
-              <div className="bg-white rounded-xl border border-slate-200 p-5">
-                <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">
-                  Loan Terms
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  {[
-                    { l: 'Loan Amount',    v: `₹${(sc.loanTerms.finalLoanAmtInr/100000).toFixed(2)}L` },
-                    { l: 'Disbursement',   v: `₹${(sc.loanTerms.disbursementInr/100000).toFixed(2)}L` },
-                    { l: 'Interest Rate',  v: `${sc.loanTerms.interestRatePct}% p.a.` },
-                    { l: 'Tenure',         v: `${sc.loanTerms.tenureMonths} months` },
-                    { l: 'Daily EMI',      v: `₹${sc.loanTerms.dailyEmiInr.toLocaleString()}` },
-                    { l: 'Processing Fee', v: `${sc.loanTerms.processingFeePct}%` },
-                    { l: 'Collateral',     v: sc.loanTerms.collateralRequired ? 'Required' : 'Not required' },
-                    { l: 'Outlet Margin',  v: `${sc.marginPct}%` },
-                  ].map(item => (
-                    <div key={item.l} className="bg-slate-50 rounded-lg p-3">
-                      <div className="text-xl font-bold text-navy" style={{ color: '#0D1F3C' }}>{item.v}</div>
-                      <div className="text-xs text-slate-400 mt-0.5">{item.l}</div>
-                    </div>
-                  ))}
-                </div>
+        {/* Step 2 — Reconciliation */}
+        {step === 2 && recon && (
+          <div className="space-y-4">
+            <div className="grid grid-cols-3 gap-3">
+              <div className="rounded-xl border border-slate-200 bg-white p-4 text-center">
+                <div className="text-xs text-slate-500">Match Rate</div>
+                <div className="text-2xl font-bold text-slate-900">{recon.match.rate}%</div>
+                <div className="text-xs text-slate-500">{recon.match.matched} matched</div>
               </div>
+              <div className="rounded-xl border border-slate-200 bg-white p-4 text-center">
+                <div className="text-xs text-slate-500">Data Integrity</div>
+                <div className="text-2xl font-bold" style={{ color: bandColor(recon.integrity.band) }}>{recon.integrity.dis}</div>
+                <div className="text-xs font-semibold" style={{ color: bandColor(recon.integrity.band) }}>{recon.integrity.band}</div>
+              </div>
+              <div className="rounded-xl border border-slate-200 bg-white p-4 text-center">
+                <div className="text-xs text-slate-500">Avg Monthly Sales</div>
+                <div className="text-2xl font-bold text-slate-900">₹{(recon.derived.avg_monthly_sales / 100000).toFixed(2)}L</div>
+                <div className="text-xs text-slate-500">QoQ {recon.derived.qq_growth_pct}%</div>
+              </div>
+            </div>
+            {recon.integrity.anomalies?.length > 0 && (
+              <div className="rounded-xl border border-red-200 bg-red-50 p-4">
+                <div className="mb-2 text-sm font-semibold text-red-800">{recon.integrity.anomaly_count} anomalies detected</div>
+                <ul className="space-y-1 text-xs text-red-700">
+                  {recon.integrity.anomalies.slice(0, 6).map((a: any, i: number) => (<li key={i}>• <b>{a.type}</b> ({a.severity}) — {a.detail}</li>))}
+                </ul>
+              </div>
+            )}
+            <button onClick={() => setStep(3)} className="w-full rounded-lg bg-slate-900 px-4 py-3 font-medium text-white">Continue to Scoring →</button>
+          </div>
+        )}
 
-              {/* AI Narrative */}
-              {ai && (
-                <div className="bg-white rounded-xl border border-slate-200 p-5 space-y-3">
-                  <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                    AI Risk Assessment
-                  </div>
-                  {ai.narrative && (
-                    <div className="rounded-lg border-l-4 border-indigo-400 bg-indigo-50 p-3">
-                      <div className="text-xs font-bold text-indigo-700 mb-1">Credit Narrative</div>
-                      <p className="text-sm text-slate-700 leading-relaxed">{ai.narrative}</p>
-                    </div>
-                  )}
-                  {ai.weakFactors && (
-                    <div className="rounded-lg border-l-4 border-red-400 bg-red-50 p-3">
-                      <div className="text-xs font-bold text-red-700 mb-1">Weak Factors</div>
-                      <p className="text-sm text-slate-700 leading-relaxed">{ai.weakFactors}</p>
-                    </div>
-                  )}
-                  {ai.improvementPath && (
-                    <div className="rounded-lg border-l-4 border-emerald-400 bg-emerald-50 p-3">
-                      <div className="text-xs font-bold text-emerald-700 mb-1">Improvement Path</div>
-                      <p className="text-sm text-slate-700 leading-relaxed">{ai.improvementPath}</p>
-                    </div>
-                  )}
-                  {ai.competitorContext && (
-                    <div className="rounded-lg border-l-4 border-amber-400 bg-amber-50 p-3">
-                      <div className="text-xs font-bold text-amber-700 mb-1">vs Competitors</div>
-                      <p className="text-sm text-slate-700 leading-relaxed">{ai.competitorContext}</p>
-                    </div>
-                  )}
+        {/* Step 3 — Score inputs */}
+        {step === 3 && (
+          <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-6">
+            <h2 className="text-lg font-bold text-slate-900">6-Factor Scoring</h2>
+            <div className="grid grid-cols-2 gap-4">
+              <label className="block text-sm font-medium text-slate-700">Avg Monthly Sales (₹)<Badge p={salesProv} />
+                <input type="number" value={avgSales} onChange={(e) => { setAvgSales(e.target.value === "" ? "" : Number(e.target.value)); if (salesProv === "DERIVED") setSalesProv("MANUAL_OVERRIDE"); }}
+                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900" /></label>
+              <label className="block text-sm font-medium text-slate-700">Q-Q Growth (%)<Badge p={growthProv} />
+                <input type="number" value={qqGrowth} onChange={(e) => { setQqGrowth(e.target.value === "" ? "" : Number(e.target.value)); if (growthProv === "DERIVED") setGrowthProv("MANUAL_OVERRIDE"); }}
+                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900" /></label>
+              <label className="block text-sm font-medium text-slate-700">Menu Category<Badge p={catProv} />
+                <select value={outletCategory} onChange={(e) => { setOutletCategory(e.target.value); if (catProv === "DERIVED") setCatProv("MANUAL_OVERRIDE"); }} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900">
+                  {["A", "B", "C", "D"].map((c) => <option key={c} value={c}>Cat {c}</option>)}</select></label>
+              <label className="block text-sm font-medium text-slate-700">Location<Badge p={locProv} />
+                <select value={locationCode} onChange={(e) => { setLocationCode(e.target.value); if (locProv === "DERIVED") setLocProv("MANUAL_OVERRIDE"); }} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900">
+                  {["A", "B", "C", "D", "E"].map((c) => <option key={c} value={c}>Loc {c}</option>)}</select></label>
+              <label className="block text-sm font-medium text-slate-700">Ambience — positive<Badge p={ambProv} />
+                <select value={ambiencePos} onChange={(e) => { setAmbiencePos(Number(e.target.value)); if (ambProv === "DERIVED") setAmbProv("MANUAL_OVERRIDE"); }} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900">
+                  {[0, 1, 2, 3].map((n) => <option key={n} value={n}>{n} positive</option>)}</select></label>
+              <label className="block text-sm font-medium text-slate-700">Ambience — average<Badge p={ambProv} />
+                <select value={ambienceAvg} onChange={(e) => { setAmbienceAvg(Number(e.target.value)); if (ambProv === "DERIVED") setAmbProv("MANUAL_OVERRIDE"); }} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900">
+                  {[0, 1, 2, 3].map((n) => <option key={n} value={n}>{n} average</option>)}</select></label>
+              <label className="block text-sm font-medium text-slate-700">CIBIL Score<Badge p="MANUAL" />
+                <input type="number" value={cibilScore} onChange={(e) => setCibilScore(Number(e.target.value))} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900" /></label>
+              <label className="block text-sm font-medium text-slate-700">Loan Cycle<Badge p="MANUAL" />
+                <select value={cycleNumber} onChange={(e) => setCycleNumber(Number(e.target.value))} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900">
+                  <option value={1}>1st loan (cap ₹3L)</option><option value={2}>2nd loan (cap ₹7L)</option><option value={3}>3rd+ loan</option></select></label>
+              <label className="block text-sm font-medium text-slate-700">Tenure (months)<Badge p="MANUAL" />
+                <select value={tenureMonths} onChange={(e) => setTenureMonths(Number(e.target.value))} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900">
+                  <option value={24}>24 months (default)</option><option value={12}>12 months</option><option value={18}>18 months</option><option value={36}>36 months</option></select></label>
+            </div>
+            <button onClick={runScore} disabled={scoreBusy} className="w-full rounded-lg bg-slate-900 px-4 py-3 font-medium text-white disabled:opacity-40">
+              {scoreBusy ? "Scoring…" : "Analyse & Underwrite →"}</button>
+          </div>
+        )}
+
+        {/* Step 4 — Decision */}
+        {step === 4 && score && (
+          <div className="space-y-4">
+            <div className="rounded-xl border-2 bg-white p-6 text-center" style={{ borderColor: bucketColor(score.bucket) }}>
+              <div className="text-xs uppercase tracking-wide text-slate-500">Decision</div>
+              <div className="text-3xl font-bold" style={{ color: bucketColor(score.bucket) }}>{score.bucket_label}</div>
+              <div className="mt-1 text-sm text-slate-600">Composite score {score.composite_score} / 5.0 · {score.decision.replace(/_/g, " ")}</div>
+              {score.integrity_override && (
+                <div className="mt-3 rounded-lg bg-red-50 p-2 text-xs font-semibold text-red-700">
+                  ⚠ Data-integrity override: reconciliation FLAGGED — forced to Pause regardless of score
                 </div>
               )}
             </div>
-          )}
-
-          {/* FSA Lite View */}
-          {sc && view === 'fsa' && (
-            <div className="space-y-4">
-              <div className={`rounded-xl border-2 p-6 text-center`}
-                   style={{
-                     background: sc.bucket === 'G' ? '#DCFCE7' : sc.bucket === 'C' ? '#FEF9C3' : '#FEF2F2',
-                     borderColor: sc.bucket === 'G' ? '#16a34a' : sc.bucket === 'C' ? '#ca8a04' : '#dc2626',
-                   }}>
-                <div className="text-4xl mb-2">
-                  {sc.bucket === 'G' ? '✅' : sc.bucket === 'C' ? '⚠️' : '❌'}
-                </div>
-                <div className="text-xl font-bold mb-1"
-                     style={{ color: sc.bucket === 'G' ? '#166534' : sc.bucket === 'C' ? '#854d0e' : '#991b1b' }}>
-                  {sc.bucket === 'G' ? 'Approved' : sc.bucket === 'C' ? 'Conditional Approval' : 'Does Not Qualify'}
-                </div>
-                <div className="text-sm" style={{ color: sc.bucket === 'G' ? '#166534' : sc.bucket === 'C' ? '#854d0e' : '#991b1b' }}>
-                  Score: {sc.compositeScore}/5.0
-                </div>
-                {sc.bucket !== 'P' && (
-                  <div className="flex justify-center gap-6 mt-4">
-                    <div><div className="text-2xl font-bold text-slate-800">₹{(sc.loanTerms.finalLoanAmtInr/100000).toFixed(1)}L</div><div className="text-xs text-slate-500">Loan</div></div>
-                    <div><div className="text-2xl font-bold text-slate-800">{sc.loanTerms.interestRatePct}%</div><div className="text-xs text-slate-500">Rate</div></div>
-                    <div><div className="text-2xl font-bold text-slate-800">{sc.loanTerms.tenureMonths}M</div><div className="text-xs text-slate-500">Tenure</div></div>
-                  </div>
-                )}
-              </div>
-
-              <div className="bg-white rounded-xl border border-slate-200 p-4">
-                <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">
-                  Tell the borrower:
-                </div>
-                {sc.bucket === 'G' && (
-                  <div className="space-y-2">
-                    <div className="flex gap-2 text-sm bg-slate-50 rounded-lg p-3"><span>✅</span><span>Loan of ₹{(sc.loanTerms.finalLoanAmtInr/100000).toFixed(1)}L approved at {sc.loanTerms.interestRatePct}% interest. Disbursement within 1 hour of docs.</span></div>
-                    <div className="flex gap-2 text-sm bg-slate-50 rounded-lg p-3"><span>📅</span><span>Daily EMI: ₹{sc.loanTerms.dailyEmiInr}. Pre-pay on good days, skip on slow days.</span></div>
-                    <div className="flex gap-2 text-sm bg-slate-50 rounded-lg p-3"><span>🎮</span><span>Good repayment unlocks higher loan cap and better rate next cycle.</span></div>
-                  </div>
-                )}
-                {sc.bucket === 'C' && (
-                  <div className="space-y-2">
-                    <div className="flex gap-2 text-sm bg-slate-50 rounded-lg p-3"><span>⚠️</span><span>Approved with conditions. ₹{(sc.loanTerms.finalLoanAmtInr/100000).toFixed(1)}L at {sc.loanTerms.interestRatePct}% — slightly higher rate due to risk profile.</span></div>
-                    <div className="flex gap-2 text-sm bg-slate-50 rounded-lg p-3"><span>🏠</span><span>Collateral required: kitchen equipment + security deposit hypothecation.</span></div>
-                    <div className="flex gap-2 text-sm bg-amber-50 rounded-lg p-3"><span>📄</span><span>PDC cheques + credit shield insurance mandatory.</span></div>
-                  </div>
-                )}
-                {sc.bucket === 'P' && (
-                  <div className="space-y-2">
-                    <div className="flex gap-2 text-sm bg-red-50 rounded-lg p-3"><span>❌</span><span>Does not meet minimum criteria right now. Score below 3.0.</span></div>
-                    <div className="flex gap-2 text-sm bg-slate-50 rounded-lg p-3"><span>💡</span><span>Working capital loan (RM / salary / rent) may still be possible — refer to credit manager.</span></div>
-                    <div className="flex gap-2 text-sm bg-slate-50 rounded-lg p-3"><span>📈</span><span>Re-apply in 3 months with documented sales improvement.</span></div>
-                  </div>
-                )}
+            <div className="grid grid-cols-3 gap-2 text-center text-xs">
+              {Object.entries(score.factors).map(([k, v]) => (
+                <div key={k} className="rounded-lg border border-slate-200 bg-white p-3">
+                  <div className="text-slate-500">{k}</div><div className="text-lg font-bold text-slate-900">{v as number}/5</div>
+                </div>))}
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-700">
+              <div className="mb-2 font-semibold text-slate-900">Loan Terms</div>
+              <div className="grid grid-cols-2 gap-y-1">
+                <span>Final loan amount</span><span className="text-right font-medium">₹{score.loan_terms.finalLoanAmtInr.toLocaleString("en-IN")}</span>
+                <span>Interest rate</span><span className="text-right font-medium">{score.loan_terms.interestRatePct}%</span>
+                <span>Tenure</span><span className="text-right font-medium">{score.loan_terms.tenureMonths} mo</span>
+                <span>Monthly EMI</span><span className="text-right font-medium">₹{score.loan_terms.monthlyEmiInr.toLocaleString("en-IN")}</span>
+                <span>Weekly collection</span><span className="text-right font-medium">₹{score.loan_terms.weeklyEmiInr.toLocaleString("en-IN")}</span>
+                <span>Disbursement</span><span className="text-right font-medium">₹{score.loan_terms.disbursementInr.toLocaleString("en-IN")}</span>
+                <span>Collateral required</span><span className="text-right font-medium">{score.loan_terms.collateralRequired ? "Yes" : "No"}</span>
               </div>
             </div>
-          )}
-        </div>
+            <div className="rounded-xl border border-slate-200 bg-white p-4 text-xs text-slate-600">
+              <div className="mb-1 font-semibold text-slate-900">Data Provenance</div>
+              Avg sales & QoQ growth: <b>derived from reconciliation</b> (DIS {recon?.integrity?.dis}, {recon?.integrity?.band}). Margin, location, ambience, CIBIL: analyst-entered.
+            </div>
+            <button onClick={() => { setStep(0); setScore(null); setRecon(null); }} className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 font-medium text-slate-700">Start new underwrite</button>
+          </div>
+        )}
+
+        {/* Nav */}
+        {step < 2 && (
+          <div className="mt-4 flex justify-between">
+            <button onClick={() => setStep((s) => Math.max(0, s - 1))} disabled={step === 0}
+              className="rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-600 disabled:opacity-30">← Back</button>
+            {step === 0 && (
+              <button onClick={goFromIdentity} disabled={!canNext || exhaustBusy}
+                className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-40">{exhaustBusy ? "Fetching…" : "Next →"}</button>
+            )}
+          </div>
+        )}
       </div>
     </div>
-  )
+  );
 }
