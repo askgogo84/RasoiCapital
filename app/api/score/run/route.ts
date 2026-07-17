@@ -49,7 +49,7 @@ LOAN TERMS:
 - Amount: â‚¹${(result.loanTerms.finalLoanAmtInr/100000).toFixed(2)}L
 - Rate: ${result.loanTerms.interestRatePct}% p.a.
 - Tenure: ${result.loanTerms.tenureMonths} months
-- Daily EMI: â‚¹${result.loanTerms.dailyEmiInr}
+- Weekly EMI: â‚¹${result.loanTerms.weeklyEmiInr}
 - Collateral: ${result.loanTerms.collateralRequired ? 'Required' : 'Not required'}
 
 Return this JSON:
