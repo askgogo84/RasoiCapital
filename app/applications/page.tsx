@@ -30,7 +30,7 @@ export default function ApplicationsPage() {
   const filtered = filter === 'all' ? apps : apps.filter(a => a.status === filter)
 
   return (
-    <div>
+    <div className="rc-page">
       <div className="mb-5 flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-xl font-bold" style={{ color: 'var(--rc-fg)' }}>Loan Applications</h1>

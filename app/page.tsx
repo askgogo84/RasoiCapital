@@ -37,7 +37,7 @@ const MODULES = [
 
 export default function HomePage() {
   return (
-    <div>
+    <div className="rc-page">
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-slate-800">

@@ -20,7 +20,7 @@ const ACTIONS = [
 
 export default function CollectionsPage() {
   return (
-    <div>
+    <div className="rc-page">
       <div className="mb-5">
         <h1 className="text-xl font-bold" style={{ color: 'var(--rc-fg)' }}>Collections Engine</h1>
         <p className="rc-eyebrow" style={{ marginTop: 4 }}>DPD buckets · FSA beats · Legal notice tracking</p>

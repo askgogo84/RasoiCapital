@@ -163,3 +163,102 @@
 .rc-chip.current { background: rgba(63,185,80,.15); color: var(--rc-lime); }
 .rc-chip.soft, .rc-chip.early { background: rgba(210,153,34,.15); color: var(--rc-amber); }
 .rc-chip.hard, .rc-chip.npa_l1, .rc-chip.npa_l2 { background: rgba(248,81,73,.15); color: var(--rc-red); }
+
+/* ============================================================
+   SIDEBAR SHELL  (Power-BI style left nav)
+   ============================================================ */
+
+/* ---- shell layout: sidebar + content ---- */
+.rc-shell { display: flex; min-height: 100vh; align-items: stretch; }
+.rc-main {
+  flex: 1 1 auto; min-width: 0;
+  padding: 24px 28px;
+  overflow-x: hidden;
+}
+/* content wrapper each page sits in */
+.rc-page { width: 100%; max-width: 1400px; margin: 0 auto; }
+/* pages that want to fill the whole content area (e.g. the pitch iframe) */
+.rc-page--flush { max-width: none; }
+
+/* ---- sidebar ---- */
+.rc-sidebar {
+  flex: 0 0 240px; width: 240px;
+  background: var(--rc-nav);
+  border-right: 1px solid var(--rc-line);
+  display: flex; flex-direction: column;
+  position: sticky; top: 0; align-self: flex-start;
+  height: 100vh;
+  transition: width .18s ease, flex-basis .18s ease;
+}
+.rc-sidebar.collapsed { flex-basis: 68px; width: 68px; }
+
+/* ---- top: brand + collapse toggle ---- */
+.rc-sb-top {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 8px; padding: 16px 14px;
+  border-bottom: 1px solid var(--rc-line);
+}
+.rc-sb-brand {
+  display: flex; align-items: center; gap: 9px;
+  text-decoration: none; color: var(--rc-nav-fg);
+  font-size: 16px; letter-spacing: -.01em; min-width: 0;
+}
+.rc-sb-logo { font-size: 20px; line-height: 1; }
+.rc-sb-name { font-weight: 600; white-space: nowrap; }
+.rc-sb-name b { color: var(--rc-cyan); font-weight: 700; }
+.rc-sb-collapse {
+  flex: 0 0 auto;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; border-radius: 6px;
+  background: var(--rc-panel); border: 1px solid var(--rc-line);
+  color: var(--rc-dim); cursor: pointer;
+}
+.rc-sb-collapse:hover { border-color: var(--rc-cyan); color: var(--rc-fg); }
+
+/* ---- nav links ---- */
+.rc-sb-nav { flex: 1 1 auto; padding: 12px 10px; overflow-y: auto; }
+.rc-sb-divider { height: 1px; background: var(--rc-line); margin: 10px 6px; }
+.rc-sb-link {
+  display: flex; align-items: center; gap: 11px;
+  padding: 9px 12px; margin: 2px 0; border-radius: 8px;
+  color: var(--rc-dim); text-decoration: none; font-size: 14px;
+  white-space: nowrap; transition: background .15s, color .15s;
+}
+.rc-sb-link:hover { background: rgba(255,255,255,.05); color: var(--rc-nav-fg); }
+.rc-sb-link.active { background: rgba(57,197,207,.12); color: var(--rc-cyan); }
+.rc-sb-link.active .rc-sb-icon { color: var(--rc-cyan); }
+.rc-sb-icon { flex: 0 0 auto; }
+
+/* ---- bottom: demo pill + theme toggle ---- */
+.rc-sb-bottom {
+  display: flex; flex-direction: column; align-items: stretch; gap: 10px;
+  padding: 14px; border-top: 1px solid var(--rc-line);
+}
+.rc-sb-bottom .rc-toggle { justify-content: center; }
+.rc-sb-bottom .rc-demo-pill { text-align: center; }
+
+/* collapsed: hide labels, center icons */
+.rc-sidebar.collapsed .rc-sb-link { justify-content: center; padding: 9px 0; }
+.rc-sidebar.collapsed .rc-sb-top { justify-content: center; }
+
+/* ---- pitch iframe ---- */
+.rc-pitch-frame {
+  width: 100%;
+  height: calc(100vh - 48px);
+  border: 1px solid var(--rc-line);
+  border-radius: 10px;
+  background: var(--rc-bg);
+  display: block;
+}
+
+/* ---- mobile: auto-collapse to icon rail ---- */
+@media (max-width: 720px) {
+  .rc-main { padding: 16px; }
+  .rc-sidebar { flex-basis: 60px; width: 60px; }
+  .rc-sidebar .rc-sb-name,
+  .rc-sidebar .rc-sb-link span,
+  .rc-sidebar .rc-sb-collapse,
+  .rc-sidebar .rc-sb-bottom .rc-demo-pill { display: none; }
+  .rc-sidebar .rc-sb-link { justify-content: center; padding: 9px 0; }
+  .rc-sidebar .rc-sb-top { justify-content: center; }
+}

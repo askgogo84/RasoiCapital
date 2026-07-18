@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import './rasoi-theme.css'
-import NavBar from '../components/NavBar'
+import Sidebar from '../components/Sidebar'
 
 export const metadata: Metadata = {
   title: 'Rasoi Capital — AI HORECA Lending',
@@ -13,10 +13,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" data-theme="dark">
       <body>
         <div className="rc-app">
-          <NavBar />
-          <main className="max-w-7xl mx-auto px-4 py-6">
-            {children}
-          </main>
+          <div className="rc-shell">
+            <Sidebar />
+            <main className="rc-main">{children}</main>
+          </div>
         </div>
       </body>
     </html>

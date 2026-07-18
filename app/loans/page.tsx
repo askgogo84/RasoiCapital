@@ -28,7 +28,7 @@ export default function LoansPage() {
   const npaCount = loans.filter(l => l.status === 'npa').length
 
   return (
-    <div>
+    <div className="rc-page">
       <div className="mb-5">
         <h1 className="text-xl font-bold" style={{ color: 'var(--rc-fg)' }}>Active Loans</h1>
         <p className="rc-eyebrow" style={{ marginTop: 4 }}>Portfolio tracker · DPD · EMI status</p>

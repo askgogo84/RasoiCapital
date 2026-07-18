@@ -176,7 +176,7 @@ export default function UnderwriteFlow() {
     : true;
 
   return (
-    <div className="rc-app" style={{ minHeight: "auto", background: "transparent" }}>
+    <div className="rc-page" style={{ minHeight: "auto", background: "transparent" }}>
       <div className="mx-auto w-full max-w-3xl">
         {/* Stepper */}
         <div className="mb-6 flex items-center justify-between">

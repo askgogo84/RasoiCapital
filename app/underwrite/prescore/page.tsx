@@ -25,7 +25,7 @@ export default function PrescorePage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-2xl space-y-4">
+    <div className="rc-page mx-auto w-full max-w-2xl space-y-4">
       <div>
         <h1 className="text-xl font-bold" style={{ color: "var(--rc-fg)" }}>Digital Exhaust Pre-Score</h1>
         <p className="rc-eyebrow" style={{ marginTop: 4 }}>Fetches ratings, price & nearby POIs → pre-scores an outlet before any visit or documents.</p>
