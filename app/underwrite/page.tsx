@@ -5,6 +5,7 @@
 "use client";
 
 import { useState } from "react";
+import OutletPicker from "@/components/OutletPicker";
 
 type Provenance = "DERIVED" | "MANUAL" | "MANUAL_OVERRIDE" | "ASSUMED";
 type DocState = "idle" | "uploading" | "parsing" | "parsed" | "failed";
@@ -202,8 +203,13 @@ export default function UnderwriteFlow() {
           <div className="rc-panel space-y-4">
             <div className="rc-panel-title">Outlet Identity</div>
             <label className="rc-label">Outlet name
-              <input value={outlet} onChange={(e) => setOutlet(e.target.value)} placeholder="e.g. Green Leaf Cafe"
-                className="rc-input mt-1" /></label>
+              <div className="mt-1">
+                <OutletPicker
+                  value={outlet}
+                  city={city}
+                  onPick={({ name, city: pickedCity }) => { setOutlet(name); setCity(pickedCity); }}
+                />
+              </div></label>
             <label className="rc-label">City
               <input value={city} onChange={(e) => setCity(e.target.value)}
                 className="rc-input mt-1" /></label>
