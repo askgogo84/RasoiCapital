@@ -73,9 +73,9 @@ export default function PitchPage() {
         </p>
         <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))", gap:20, maxWidth:720}}>
           <Stat big="₹50 Cr" label="Raising" />
-          <Stat big="NBFC Licence + NOF" label="Includes" tone={C.fg} />
+          <Stat big="NBFC Licence + NOF" label="Includes" tone="var(--rc-fg)" />
           <Stat big="Live & Demo-Ready" label="Product status" tone={C.lime} />
-          <Stat big="Seed / Pre-Series A" label="Stage" tone={C.fg} />
+          <Stat big="Seed / Pre-Series A" label="Stage" tone="var(--rc-fg)" />
         </div>
         <div style={{marginTop:28, fontSize:13, color:"var(--rc-dim)"}}>Nexus AI · Bengaluru · Investor Presentation · 2026</div>
       </section>
@@ -127,7 +127,7 @@ export default function PitchPage() {
         <div style={{display:"flex", flexWrap:"wrap", gap:28, padding:"20px 24px", background:"var(--rc-panel2)", borderRadius:12}}>
           <Stat big="36–48%" label="p.a. — informal moneylenders, the default banker of Indian HORECA" tone={C.red} />
           <Stat big="~70%" label="of outlets remain outside formal credit (industry est.)" tone={C.amber} />
-          <Stat big="8.5M+" label="people employed — India's 2nd largest employer (NRAI)" tone={C.fg} />
+          <Stat big="8.5M+" label="people employed — India's 2nd largest employer (NRAI)" tone="var(--rc-fg)" />
         </div>
       </Section>
 

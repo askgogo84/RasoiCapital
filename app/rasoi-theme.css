@@ -262,3 +262,23 @@
   .rc-sidebar .rc-sb-link { justify-content: center; padding: 9px 0; }
   .rc-sidebar .rc-sb-top { justify-content: center; }
 }
+
+/* Append to app/rasoi-theme.css — guarantees readable text in LIGHT mode.
+   The pitch page (and others) use var(--rc-dim) for body text and var(--rc-fg)
+   for headings. If light-mode values are too pale, text washes out on white.
+   These override the light-theme tokens to accessible contrast (WCAG AA). */
+
+:root[data-theme="light"] {
+  --rc-fg:    #1A1F26;   /* near-black headings on white */
+  --rc-dim:   #4B5563;   /* readable slate-gray body text (was too light) */
+  --rc-line:  #E2E6EB;   /* subtle dividers */
+  --rc-panel:  #FFFFFF;
+  --rc-panel2: #F5F7FA;
+  --rc-nav:    #0E1116;  /* keep sidebar dark even in light mode (optional) */
+  --rc-nav-fg: #E6EDF3;
+}
+
+/* Cyan/lime/amber accents stay vivid on white — but nudge cyan a touch darker
+   in light mode so it's readable as text, not just as accent. */
+:root[data-theme="light"] .rc-mono[style*="--rc-cyan"],
+:root[data-theme="light"] a { color: #0E8A94; }
