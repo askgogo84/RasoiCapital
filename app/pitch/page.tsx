@@ -133,7 +133,7 @@ export default function PitchPage() {
 
       {/* ——— MARKET ——— */}
       <Section id="market" eyebrow="The market" title="3rd-largest food market on Earth by 2028.">
-        <div style={{display:"grid", gridTemplateColumns:"1.1fr 1fr", gap:28, alignItems:"center"}}>
+        <div className="rc-grid-2" style={{alignItems:"center", gap:28}}>
           <div className="rc-panel">
             <div className="rc-panel-title">Indian food services industry (₹ lakh Cr)</div>
             <ResponsiveContainer width="100%" height={240}>
@@ -244,7 +244,7 @@ export default function PitchPage() {
 
       {/* ——— LIVE DEMO ——— */}
       <Section id="demo" eyebrow="🎯 Live demo" title="Let's underwrite a real restaurant. Right now.">
-        <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:20}}>
+        <div className="rc-grid-2" style={{gap:20}}>
           <div className="rc-panel">
             <div className="rc-panel-title">We type — the investor picks the numbers</div>
             <div style={{display:"grid", gap:14, marginTop:6}}>
@@ -374,7 +374,7 @@ export default function PitchPage() {
       {/* ——— BUSINESS MODEL ——— */}
       <Section id="unit" eyebrow="Business model" title="Unit economics of a single loan.">
         <p style={{color:"var(--rc-dim)", fontSize:15, marginBottom:24, marginTop:-8}}>Cycle-1 illustrative · Bucket C · ₹7L · 6 months · 19% p.a. + 2.5% PF</p>
-        <div style={{display:"grid", gridTemplateColumns:"1.3fr 1fr", gap:24}}>
+        <div className="rc-grid-2" style={{gap:24}}>
           <div className="rc-panel">
             <div style={{display:"grid", gap:2}}>
               <Row k="Interest income (6 mo)" v="+ ₹66,500" tone={C.lime} />
@@ -400,7 +400,7 @@ export default function PitchPage() {
       {/* ——— REGULATORY ——— */}
       <Section id="regulatory" eyebrow="Regulatory strategy" title="Two roads to the licence. Both fully costed.">
         <p style={{color:"var(--rc-dim)", fontSize:15, marginBottom:24, marginTop:-8}}>RBI mandates ₹10 Cr minimum Net Owned Fund either way (Sec 45-IA, RBI Act) — it anchors this raise.</p>
-        <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:16}}>
+        <div className="rc-grid-2" style={{gap:16}}>
           <Card accent={C.lime}>
             <div style={{display:"flex", justifyContent:"space-between"}}><b style={{color:"var(--rc-fg)"}}>Path A · Acquire an NBFC</b><Pill tone={C.lime}>4–7 mo</Pill></div>
             <ul style={{fontSize:13, color:"var(--rc-dim)", lineHeight:1.6, marginTop:10, paddingLeft:16}}>

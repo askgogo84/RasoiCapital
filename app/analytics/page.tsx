@@ -50,7 +50,7 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Charts grid */}
-      <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:18, marginBottom:18}}>
+      <div className="rc-grid-2" style={{marginBottom:18}}>
         <div className="rc-panel">
           <div className="rc-panel-title">DPD Bucket Distribution</div>
           <ResponsiveContainer width="100%" height={260}>
@@ -86,7 +86,7 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
-      <div style={{display:"grid", gridTemplateColumns:"1.4fr 1fr", gap:18}}>
+      <div className="rc-grid-sidebar-charts">
         <div className="rc-panel">
           <div className="rc-panel-title">Disbursement Trend</div>
           <ResponsiveContainer width="100%" height={260}>

@@ -158,7 +158,7 @@ export default function ProjectionsPage() {
         <Stat label="Breakeven" value={breakeven ? breakeven.month : ">M24"} tone={breakeven?C.lime:C.amber} />
       </div>
 
-      <div style={{display:"grid", gridTemplateColumns:"300px 1fr", gap:20}}>
+      <div className="rc-grid-projections">
         {/* driver panel */}
         <div className="rc-panel">
           <div className="rc-panel-title">Drivers</div>
