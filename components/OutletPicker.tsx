@@ -59,9 +59,12 @@ export default function OutletPicker({
         autoComplete="off"
       />
       {open && (
-        <div className="rc-panel" style={{
-          position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, zIndex: 40,
-          maxHeight: 260, overflowY: "auto", padding: 6, boxShadow: "0 8px 24px rgba(0,0,0,.3)",
+        <div style={{
+          position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, zIndex: 1000,
+          maxHeight: 320, overflowY: "auto", padding: 6,
+          background: "var(--rc-panel, #fff)",
+          border: "1px solid var(--rc-line, #e2e6eb)",
+          borderRadius: 10, boxShadow: "0 12px 32px rgba(0,0,0,.28)",
         }}>
           {loading && <div style={{ padding: 12, fontSize: 13, color: "var(--rc-dim)" }}>Loading outlets…</div>}
           {!loading && filtered.length === 0 && (
