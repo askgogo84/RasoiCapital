@@ -72,7 +72,8 @@ export default function OutletPicker({
           {!loading && filtered.map((o, i) => (
             <button
               key={`${o.outlet_name}-${i}`}
-              onClick={() => {
+              onMouseDown={(e) => {
+                e.preventDefault();
                 onPick({ name: o.outlet_name, city: o.city || city || "Bengaluru", outletId: o.id });
                 setQuery(o.outlet_name);
                 setOpen(false);
