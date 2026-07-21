@@ -56,7 +56,7 @@ export default function PitchPage() {
 
       {/* download bar */}
       <div style={{display:"flex", justifyContent:"flex-end", marginBottom:8}}>
-        <a href="/RasoiCapital_PitchDeck.pptx" download className="rc-btn" style={{width:"auto", padding:"9px 16px", textDecoration:"none", display:"inline-flex", alignItems:"center", gap:8}}>
+        <a href="/RasoiCapital_PitchDeck.pptx" download className="rc-btn" style={{width:"auto", padding:"9px 16px", textDecoration:"none", display:"inline-flex", alignItems:"center", gap:8, color:"#fff"}}>
           ⬇ Download the deck (.pptx)
         </a>
       </div>
