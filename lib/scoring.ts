@@ -21,20 +21,21 @@ export function scoreMargin(cat: string): number {
 
 // Factor 2: Q-Q Sales Growth (weight 30%)
 export function scoreQQGrowth(pct: number): number {
-  if (pct >= 20) return 5
-  if (pct >= 15) return 4
-  if (pct >= 10) return 3
-  if (pct >= 5)  return 2
-  return 1
+  if (pct >= 15) return 5   // exceptional
+  if (pct >= 5)  return 4   // strong steady growth (~22%+ annualized)
+  if (pct >= 2)  return 3   // healthy
+  if (pct >= 0)  return 2   // flat
+  return 1                   // declining
 }
 
 // Factor 3: Avg Monthly Sales (weight 20%)
 export function scoreAvgSales(inr: number): number {
   const L = inr / 100000
-  if (L >= 10) return 5
-  if (L >= 7)  return 4
-  if (L >= 5)  return 3
-  if (L >= 3)  return 2
+  if (L >= 7)   return 5
+  if (L >= 5)   return 4
+  if (L >= 3.5) return 4
+  if (L >= 2.5) return 3
+  if (L >= 1.5) return 2
   return 1
 }
 
@@ -110,13 +111,18 @@ export function runScoring(input: ScoringInput): ScoringResult {
   const requestedTenure = input.tenureMonths && input.tenureMonths > 0 ? input.tenureMonths : 24
   const marginPct = OUTLET_MARGINS[input.outletCategory] || 27
 
+  // Manual factors default to a NEUTRAL 3 when not provided (absent input),
+  // rather than falling through to the "assume worst" score of 1.
+  // Provided values (incl. unknown category/location codes) score as before.
   const factors = {
-    margin:   scoreMargin(input.outletCategory),
+    margin:   input.outletCategory == null ? 3 : scoreMargin(input.outletCategory),
     qqGrowth: scoreQQGrowth(input.qqGrowthPct),
     avgSales: scoreAvgSales(input.avgMonthlySalesInr),
-    location: scoreLocation(input.locationCode),
-    ambience: scoreAmbience(input.ambiencePos, input.ambienceAvg),
-    cibil:    scoreCIBIL(input.cibilScore),
+    location: input.locationCode == null ? 3 : scoreLocation(input.locationCode),
+    ambience: (input.ambiencePos == null && input.ambienceAvg == null)
+                ? 3
+                : scoreAmbience(input.ambiencePos ?? 0, input.ambienceAvg ?? 0),
+    cibil:    input.cibilScore == null ? 3 : scoreCIBIL(input.cibilScore),
   }
 
   const compositeScore = Math.round((
