@@ -306,9 +306,10 @@
 
 /* Charts must never exceed their container width on mobile */
 .rc-panel { min-width:0; max-width:100%; }
-/* Clip only the chart containers horizontally (that was the real overflow culprit),
-   NOT the whole panel — otherwise dropdowns/menus inside panels get clipped. */
-.recharts-wrapper, .recharts-responsive-container { max-width:100% !important; overflow:hidden; }
+/* Grid children need min-width:0 so charts can shrink instead of forcing overflow */
+.rc-grid-2 > *, .rc-grid-3 > *, .rc-grid-auto > *, .rc-grid-sidebar-charts > *, .rc-grid-projections > * { min-width:0; }
+/* Let the responsive container fill its column without clipping the chart */
+.recharts-responsive-container { width:100% !important; max-width:100% !important; }
 
 /* Page padding tightens on mobile so cards use full width */
 @media (max-width: 820px) {
