@@ -14,6 +14,8 @@ import { inr, crAxis, num } from "./format";
 import { CH, tooltipStyle, tooltipLabelStyle, tooltipItemStyle, Section, ChartCard, KpiCard } from "./ui";
 import { LoanEngine } from "./sections/LoanEngine";
 import { TechCost, Operations, Marketing, Setup } from "./sections/costs";
+import { PnL } from "./sections/PnL";
+import { Provisioning, Cities } from "./sections/tables";
 
 const SECTIONS: [string, string][] = [
   ["dashboard", "Dashboard"],
@@ -76,28 +78,18 @@ export default function ProjectionsPage() {
 
           <LoanEngine state={state} setState={setState} outputs={outputs} />
 
-          <Stub id="cities" title="City Break Up" />
-          <Stub id="pnl" title="P&L" />
+          <Cities state={state} setState={setState} />
+          <PnL outputs={outputs} />
 
           <TechCost state={state} setState={setState} />
           <Operations state={state} setState={setState} />
           <Marketing state={state} setState={setState} />
           <Setup state={state} setState={setState} />
 
-          <Stub id="provisioning" title="Bad-Debt Provisioning" />
+          <Provisioning state={state} setState={setState} outputs={outputs} />
         </div>
       </div>
     </div>
-  );
-}
-
-function Stub({ id, title }: { id: string; title: string }) {
-  return (
-    <Section id={id} title={title}>
-      <div className="rc-panel" style={{ color: "var(--rc-dim)", fontSize: 13 }}>
-        This section is part of the model rebuild and lands in a later step.
-      </div>
-    </Section>
   );
 }
 
