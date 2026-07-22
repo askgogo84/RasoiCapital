@@ -336,3 +336,98 @@
 /* Make sure the theme toggle itself is always visible (not display:none) */
 .rc-sb-bottom .theme-toggle,
 .rc-sb-bottom button { display:flex !important; }
+
+/* ============================================================
+   /pitch — DECK-MATCHED PALETTE, INDEPENDENT OF THE dark/light TOGGLE
+   Values are the true colours extracted from public/RasoiCapital_PitchDeck.pptx
+   slide shapes. These --pitch-* tokens are the SINGLE SOURCE OF TRUTH; the
+   C{} / DECK_* JS constants in app/pitch/page.tsx mirror them 1:1 (they can't be
+   var() references because the page builds tints by concatenating an 8-bit alpha
+   suffix onto the hex, e.g. `${C.cyan}1a`, which var() can't carry).
+   Theme mechanism = data-theme attribute on <html> (see layout.tsx / ThemeToggle).
+   ============================================================ */
+.rc-pitch {
+  --pitch-bg:        #FAF7F2;  /* deck page background (cream) */
+  --pitch-surface:   #FFFFFF;  /* card surface */
+  --pitch-surface-2: #F8FAFC;  /* alternate/inset surface */
+  --pitch-border:    #E2E8F0;
+  --pitch-border-str:#CBD5E1;
+  --pitch-ink:       #0F172A;  /* headings */
+  --pitch-body:      #475569;  /* body text */
+  --pitch-muted:     #94A3B8;  /* captions, eyebrows */
+  --pitch-accent:    #E8520A;  /* deck orange */
+  --pitch-accent-bg: #FFF4EC;  /* orange tint panel */
+  --pitch-green:     #15803D;
+  --pitch-teal:      #0F766E;
+  --pitch-amber:     #B45309;
+  --pitch-red:       #B91C1C;
+
+  background: var(--pitch-bg);
+  color: var(--pitch-body);
+  box-sizing: border-box;
+  /* full-bleed cream across the whole content area; content re-centred by .rc-pitch-inner */
+  padding: 0 clamp(16px, 4vw, 40px);
+}
+
+/* The toggle must not reach inside the pitch page: redeclare identically under
+   BOTH theme states so dark mode inherits the same light values. */
+[data-theme="dark"] .rc-pitch,
+[data-theme="light"] .rc-pitch {
+  --pitch-bg:        #FAF7F2;
+  --pitch-surface:   #FFFFFF;
+  --pitch-surface-2: #F8FAFC;
+  --pitch-border:    #E2E8F0;
+  --pitch-border-str:#CBD5E1;
+  --pitch-ink:       #0F172A;
+  --pitch-body:      #475569;
+  --pitch-muted:     #94A3B8;
+  --pitch-accent:    #E8520A;
+  --pitch-accent-bg: #FFF4EC;
+  --pitch-green:     #15803D;
+  --pitch-teal:      #0F766E;
+  --pitch-amber:     #B45309;
+  --pitch-red:       #B91C1C;
+  background: var(--pitch-bg);
+  color: var(--pitch-body);
+}
+
+/* centred content column; padding forced to 0 so we never double-gutter with the
+   outer cream padding (overrides the global mobile `.rc-page{padding:16px!important}`) */
+.rc-pitch .rc-pitch-inner {
+  width: 100%;
+  max-width: 1080px;
+  margin: 0 auto;
+  background: transparent;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+/* every box inside pitch respects its width (guards width:100% alongside padding) */
+.rc-pitch *, .rc-pitch *::before, .rc-pitch *::after { box-sizing: border-box; }
+
+/* route the shared component classes to the pitch tokens so NOTHING inside
+   .rc-pitch resolves a --rc-* (theme) token */
+.rc-pitch .rc-panel {
+  background: var(--pitch-surface);
+  border: 1px solid var(--pitch-border);
+  color: var(--pitch-body);
+}
+.rc-pitch .rc-panel-title { color: var(--pitch-muted); }
+.rc-pitch .rc-eyebrow     { color: var(--pitch-muted); }
+.rc-pitch h1, .rc-pitch h2, .rc-pitch h3 { color: var(--pitch-ink); }
+
+/* Step 1b — "Download the deck" / CTA buttons: legible & identical in both themes.
+   Solid = white on deck orange; ghost = orange on white.
+   NOTE: these buttons are <a> elements, so the global light-mode rule
+   `:root[data-theme="light"] a { color:#0E8A94 }` (specificity 0,2,1) would otherwise
+   repaint the text teal in light mode. `!important` on colour keeps them deck-locked. */
+.rc-pitch a.rc-btn, .rc-pitch button.rc-btn {
+  background: var(--pitch-accent);
+  color: #FFFFFF !important;
+  border: 1px solid var(--pitch-accent);
+}
+.rc-pitch a.rc-btn-ghost, .rc-pitch button.rc-btn-ghost {
+  background: var(--pitch-surface);
+  color: var(--pitch-accent) !important;
+  border: 1px solid var(--pitch-border-str);
+}
