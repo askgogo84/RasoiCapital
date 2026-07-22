@@ -9,7 +9,8 @@ import {
   Tooltip, CartesianGrid, Legend, Area, AreaChart, Cell,
 } from "recharts";
 import { computeModel } from "@/lib/model/engine";
-import { DEFAULT_STATE, deriveInputs, type ModelState } from "./state";
+import { DEFAULT_STATE, deriveInputs, makeDefaultState, type ModelState } from "./state";
+import { exportModel } from "./export";
 import { inr, crAxis, num } from "./format";
 import { CH, tooltipStyle, tooltipLabelStyle, tooltipItemStyle, Section, ChartCard, KpiCard } from "./ui";
 import { LoanEngine } from "./sections/LoanEngine";
@@ -57,9 +58,23 @@ export default function ProjectionsPage() {
 
   return (
     <div className="rc-page">
-      <div style={{ marginBottom: 6 }}>
-        <div className="rc-eyebrow">Investor Model · Loan_Projection_V2</div>
-        <h1 style={{ fontSize: 24, fontWeight: 700, color: "var(--rc-fg)", marginTop: 4 }}>Financial Projections</h1>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 6, flexWrap: "wrap" }}>
+        <div>
+          <div className="rc-eyebrow">Investor Model · Loan_Projection_V2</div>
+          <h1 style={{ fontSize: 24, fontWeight: 700, color: "var(--rc-fg)", marginTop: 4 }}>Financial Projections</h1>
+        </div>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+          <button className="rc-btn" style={{ width: "auto", padding: "10px 16px", fontSize: 14 }} onClick={() => exportModel(state, outputs)}>
+            ⬇ Export to Excel
+          </button>
+          <button
+            className="rc-btn rc-btn-ghost"
+            style={{ width: "auto", padding: "10px 16px", fontSize: 14 }}
+            onClick={() => setState(makeDefaultState())}
+          >
+            ↺ Reset to model defaults
+          </button>
+        </div>
       </div>
       <p style={{ color: "var(--rc-dim)", fontSize: 13, marginBottom: 20 }}>
         The full 3-year model from the CFO workbook. Every input is editable and the whole model
