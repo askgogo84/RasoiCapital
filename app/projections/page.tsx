@@ -1,213 +1,221 @@
-// app/projections/page.tsx — interactive financial projections model.
-// Sliders drive a live 24-month P&L + AUM projection. Export to Excel (SheetJS).
+// app/projections/page.tsx — the company's real 3-year financial model,
+// ported from Loan_Projection_V2.xlsx. One long dashboard page; a section per
+// workbook tab; every input editable; everything recalculates client-side via
+// lib/model/engine.ts. No server calls, no storage — edits are session-only.
 "use client";
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ResponsiveContainer, LineChart, Line, BarChart, Bar, XAxis, YAxis,
-  Tooltip, CartesianGrid, Legend, Area, AreaChart,
+  Tooltip, CartesianGrid, Legend, Area, AreaChart, Cell,
 } from "recharts";
-import * as XLSX from "xlsx";
+import { computeModel } from "@/lib/model/engine";
+import { DEFAULT_STATE, deriveInputs, type ModelState } from "./state";
+import { inr, crAxis, num } from "./format";
+import { CH, tooltipStyle, tooltipLabelStyle, tooltipItemStyle, Section, ChartCard, KpiCard } from "./ui";
 
-const C = { cyan:"#39C5CF", lime:"#3FB950", amber:"#D29922", red:"#F85149", dim:"#8B949E", line:"#2A3038" };
-const inr = (n:number) => {
-  const a = Math.abs(n);
-  if (a >= 10000000) return `${n<0?"-":""}₹${(a/10000000).toFixed(2)}Cr`;
-  if (a >= 100000) return `${n<0?"-":""}₹${(a/100000).toFixed(1)}L`;
-  return `${n<0?"-":""}₹${Math.round(a).toLocaleString("en-IN")}`;
-};
+const SECTIONS: [string, string][] = [
+  ["dashboard", "Dashboard"],
+  ["loan-engine", "Loan Engine"],
+  ["cities", "City Break Up"],
+  ["pnl", "P&L"],
+  ["tech", "Tech Cost"],
+  ["operations", "Operations"],
+  ["marketing", "Marketing & Sales"],
+  ["setup", "Set-Up Cost"],
+  ["provisioning", "Bad-Debt Provisioning"],
+];
+const SECTION_IDS = SECTIONS.map((s) => s[0]);
 
-type Drivers = {
-  startLoans: number;      // loans disbursed in month 1
-  monthlyGrowth: number;   // % MoM growth in new loans
-  avgTicket: number;       // ₹ average loan size
-  interestRate: number;    // % p.a.
-  processingFee: number;   // % of loan
-  tenureMonths: number;    // loan tenure
-  npaRate: number;         // % of book that defaults (annualized loss)
-  costOfCapital: number;   // % p.a. on borrowed funds
-  opexPerLoan: number;     // ₹ operating cost per loan per month
-  ownCapitalPct: number;   // % of book funded by own equity (rest is debt)
-};
-
-const DEFAULTS: Drivers = {
-  startLoans: 40, monthlyGrowth: 12, avgTicket: 300000, interestRate: 20,
-  processingFee: 2.5, tenureMonths: 24, npaRate: 3, costOfCapital: 12,
-  opexPerLoan: 600, ownCapitalPct: 30,
-};
-
-function project(d: Drivers) {
-  const months = 24;
-  const rows: any[] = [];
-  let activeLoans = 0;
-  let bookOutstanding = 0;
-  let cumProfit = 0;
-  const disbursedByMonth: number[] = [];
-
-  for (let m = 1; m <= months; m++) {
-    const newLoans = Math.round(d.startLoans * Math.pow(1 + d.monthlyGrowth/100, m-1));
-    disbursedByMonth.push(newLoans);
-    const newDisbursed = newLoans * d.avgTicket;
-
-    // loans that mature drop off after tenure
-    const maturedLoans = m > d.tenureMonths ? disbursedByMonth[m - d.tenureMonths - 1] || 0 : 0;
-    activeLoans += newLoans - maturedLoans;
-    if (activeLoans < 0) activeLoans = 0;
-
-    bookOutstanding = activeLoans * d.avgTicket * 0.6; // avg ~60% outstanding across tenure
-
-    // revenue
-    const interestIncome = bookOutstanding * (d.interestRate/100) / 12;
-    const feeIncome = newDisbursed * (d.processingFee/100);
-
-    // costs
-    const debtFunded = bookOutstanding * (1 - d.ownCapitalPct/100);
-    const capitalCost = debtFunded * (d.costOfCapital/100) / 12;
-    const opex = activeLoans * d.opexPerLoan;
-    const creditLoss = bookOutstanding * (d.npaRate/100) / 12;
-
-    const netProfit = interestIncome + feeIncome - capitalCost - opex - creditLoss;
-    cumProfit += netProfit;
-
-    rows.push({
-      month: `M${m}`,
-      newLoans, activeLoans, aum: Math.round(bookOutstanding),
-      interestIncome: Math.round(interestIncome), feeIncome: Math.round(feeIncome),
-      capitalCost: Math.round(capitalCost), opex: Math.round(opex),
-      creditLoss: Math.round(creditLoss), netProfit: Math.round(netProfit),
-      cumProfit: Math.round(cumProfit),
+function useScrollSpy(ids: string[]) {
+  const [active, setActive] = useState(ids[0]);
+  useEffect(() => {
+    const obs = new IntersectionObserver(
+      (entries) => {
+        const vis = entries.filter((e) => e.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+        if (vis[0]) setActive(vis[0].target.id);
+      },
+      { rootMargin: "-20% 0px -70% 0px", threshold: [0, 0.25, 0.5, 1] },
+    );
+    ids.forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) obs.observe(el);
     });
-  }
-  return rows;
-}
-
-function Slider({ label, value, onChange, min, max, step, fmt }: any) {
-  return (
-    <div style={{marginBottom:16}}>
-      <div style={{display:"flex", justifyContent:"space-between", marginBottom:6}}>
-        <span style={{fontSize:13, color:"var(--rc-dim)"}}>{label}</span>
-        <span className="rc-mono" style={{fontSize:13, color:"var(--rc-cyan)"}}>{fmt ? fmt(value) : value}</span>
-      </div>
-      <input type="range" min={min} max={max} step={step} value={value}
-        onChange={e=>onChange(Number(e.target.value))}
-        style={{width:"100%", accentColor:"#39C5CF"}} />
-    </div>
-  );
-}
-
-function Stat({ label, value, tone }: any) {
-  return (
-    <div className="rc-panel" style={{padding:"16px 18px"}}>
-      <div className="rc-mono" style={{fontSize:10, letterSpacing:".08em", textTransform:"uppercase", color:"var(--rc-dim)", marginBottom:6}}>{label}</div>
-      <div className="rc-mono" style={{fontSize:22, fontWeight:600, color:tone||"var(--rc-fg)"}}>{value}</div>
-    </div>
-  );
+    return () => obs.disconnect();
+  }, [ids]);
+  return active;
 }
 
 export default function ProjectionsPage() {
-  const [d, setD] = useState<Drivers>(DEFAULTS);
-  const set = (k: keyof Drivers) => (v: number) => setD(p => ({...p, [k]: v}));
-  const rows = useMemo(() => project(d), [d]);
-
-  const last = rows[rows.length-1];
-  const totalDisbursed = rows.reduce((s,r)=>s + r.newLoans * d.avgTicket, 0);
-  const totalRevenue = rows.reduce((s,r)=>s + r.interestIncome + r.feeIncome, 0);
-  const breakeven = rows.find(r=>r.cumProfit > 0);
-
-  function exportExcel() {
-    const wb = XLSX.utils.book_new();
-    // assumptions sheet
-    const assumptions = [
-      ["Rasoi Capital — Financial Projections","",""],
-      ["Assumption","Value",""],
-      ["Loans in month 1", d.startLoans,""],
-      ["Monthly growth %", d.monthlyGrowth,""],
-      ["Avg ticket (₹)", d.avgTicket,""],
-      ["Interest rate % p.a.", d.interestRate,""],
-      ["Processing fee %", d.processingFee,""],
-      ["Tenure (months)", d.tenureMonths,""],
-      ["NPA / credit loss %", d.npaRate,""],
-      ["Cost of capital % p.a.", d.costOfCapital,""],
-      ["Opex per loan / month (₹)", d.opexPerLoan,""],
-      ["Own capital %", d.ownCapitalPct,""],
-    ];
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(assumptions), "Assumptions");
-    // projection sheet
-    const header = ["Month","New Loans","Active Loans","AUM (₹)","Interest Income","Fee Income","Capital Cost","Opex","Credit Loss","Net Profit","Cumulative Profit"];
-    const body = rows.map(r=>[r.month,r.newLoans,r.activeLoans,r.aum,r.interestIncome,r.feeIncome,r.capitalCost,r.opex,r.creditLoss,r.netProfit,r.cumProfit]);
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([header,...body]), "24-Month Projection");
-    XLSX.writeFile(wb, "Rasoi_Financial_Projections.xlsx");
-  }
+  const [state] = useState<ModelState>(() => JSON.parse(JSON.stringify(DEFAULT_STATE)));
+  const inputs = useMemo(() => deriveInputs(state), [state]);
+  const outputs = useMemo(() => computeModel(inputs), [inputs]);
+  const active = useScrollSpy(SECTION_IDS);
 
   return (
     <div className="rc-page">
-      <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:6}}>
-        <div>
-          <div className="rc-eyebrow">Investor Model</div>
-          <h1 style={{fontSize:24, fontWeight:700, color:"var(--rc-fg)", marginTop:4}}>Financial Projections</h1>
-        </div>
-        <button className="rc-btn" style={{width:"auto", padding:"10px 18px"}} onClick={exportExcel}>⬇ Export to Excel</button>
+      <div style={{ marginBottom: 6 }}>
+        <div className="rc-eyebrow">Investor Model · Loan_Projection_V2</div>
+        <h1 style={{ fontSize: 24, fontWeight: 700, color: "var(--rc-fg)", marginTop: 4 }}>Financial Projections</h1>
       </div>
-      <p style={{color:"var(--rc-dim)", fontSize:13, marginBottom:24}}>Adjust the drivers — the 24-month P&L and AUM projection recalculates live. Export the full model to Excel anytime.</p>
+      <p style={{ color: "var(--rc-dim)", fontSize: 13, marginBottom: 20 }}>
+        The full 3-year model from the CFO workbook. Every input is editable and the whole model
+        recalculates instantly. <span className="rc-mono" style={{ color: "var(--rc-amber)" }}>Edits are local to this session.</span>
+      </p>
 
-      {/* headline stats */}
-      <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))", gap:14, marginBottom:24}}>
-        <Stat label="AUM @ M24" value={inr(last.aum)} tone={C.cyan} />
-        <Stat label="Total Disbursed" value={inr(totalDisbursed)} />
-        <Stat label="Total Revenue" value={inr(totalRevenue)} tone={C.lime} />
-        <Stat label="Cumulative Profit @ M24" value={inr(last.cumProfit)} tone={last.cumProfit>0?C.lime:C.red} />
-        <Stat label="Breakeven" value={breakeven ? breakeven.month : ">M24"} tone={breakeven?C.lime:C.amber} />
-      </div>
+      <div className="rc-proj-layout">
+        <nav className="rc-proj-nav" aria-label="Model sections">
+          {SECTIONS.map(([id, label]) => (
+            <a key={id} href={`#${id}`} className={active === id ? "active" : ""}>{label}</a>
+          ))}
+        </nav>
 
-      <div className="rc-grid-projections">
-        {/* driver panel */}
-        <div className="rc-panel">
-          <div className="rc-panel-title">Drivers</div>
-          <Slider label="Loans in month 1" value={d.startLoans} onChange={set("startLoans")} min={10} max={200} step={5} />
-          <Slider label="Monthly growth" value={d.monthlyGrowth} onChange={set("monthlyGrowth")} min={0} max={30} step={1} fmt={(v:number)=>`${v}%`} />
-          <Slider label="Avg ticket" value={d.avgTicket} onChange={set("avgTicket")} min={100000} max={800000} step={25000} fmt={inr} />
-          <Slider label="Interest rate" value={d.interestRate} onChange={set("interestRate")} min={12} max={30} step={0.5} fmt={(v:number)=>`${v}%`} />
-          <Slider label="Processing fee" value={d.processingFee} onChange={set("processingFee")} min={0} max={5} step={0.25} fmt={(v:number)=>`${v}%`} />
-          <Slider label="Tenure" value={d.tenureMonths} onChange={set("tenureMonths")} min={6} max={36} step={6} fmt={(v:number)=>`${v}mo`} />
-          <Slider label="NPA / credit loss" value={d.npaRate} onChange={set("npaRate")} min={0} max={10} step={0.5} fmt={(v:number)=>`${v}%`} />
-          <Slider label="Cost of capital" value={d.costOfCapital} onChange={set("costOfCapital")} min={6} max={18} step={0.5} fmt={(v:number)=>`${v}%`} />
-          <Slider label="Opex / loan / mo" value={d.opexPerLoan} onChange={set("opexPerLoan")} min={200} max={2000} step={100} fmt={inr} />
-          <Slider label="Own capital" value={d.ownCapitalPct} onChange={set("ownCapitalPct")} min={0} max={100} step={5} fmt={(v:number)=>`${v}%`} />
-          <button className="rc-btn rc-btn-ghost" style={{marginTop:8}} onClick={()=>setD(DEFAULTS)}>Reset to defaults</button>
-        </div>
+        <div style={{ minWidth: 0 }}>
+          <Dashboard outputs={outputs} />
 
-        {/* charts */}
-        <div style={{display:"grid", gap:18}}>
-          <div className="rc-panel">
-            <div className="rc-panel-title">AUM Growth (24 months)</div>
-            <ResponsiveContainer width="100%" height={220}>
-              <AreaChart data={rows}>
-                <defs><linearGradient id="aum" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={C.cyan} stopOpacity={0.4}/><stop offset="100%" stopColor={C.cyan} stopOpacity={0}/>
-                </linearGradient></defs>
-                <CartesianGrid strokeDasharray="3 3" stroke={C.line} />
-                <XAxis dataKey="month" tick={{fill:C.dim, fontSize:10}} interval={2} />
-                <YAxis tick={{fill:C.dim, fontSize:10}} tickFormatter={inr} />
-                <Tooltip contentStyle={{background:"var(--rc-panel2)", border:`1px solid ${C.line}`, borderRadius:8, fontSize:12}} formatter={(v:any)=>inr(v)} />
-                <Area type="monotone" dataKey="aum" stroke={C.cyan} strokeWidth={2} fill="url(#aum)" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="rc-panel">
-            <div className="rc-panel-title">Monthly Net Profit & Cumulative</div>
-            <ResponsiveContainer width="100%" height={220}>
-              <LineChart data={rows}>
-                <CartesianGrid strokeDasharray="3 3" stroke={C.line} />
-                <XAxis dataKey="month" tick={{fill:C.dim, fontSize:10}} interval={2} />
-                <YAxis tick={{fill:C.dim, fontSize:10}} tickFormatter={inr} />
-                <Tooltip contentStyle={{background:"var(--rc-panel2)", border:`1px solid ${C.line}`, borderRadius:8, fontSize:12}} formatter={(v:any)=>inr(v)} />
-                <Legend wrapperStyle={{fontSize:12}} />
-                <Line type="monotone" dataKey="netProfit" name="Monthly" stroke={C.lime} strokeWidth={2} dot={false} />
-                <Line type="monotone" dataKey="cumProfit" name="Cumulative" stroke={C.amber} strokeWidth={2} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
+          {/* Sections below are built in later phases of this rebuild. */}
+          {SECTIONS.slice(1).map(([id, label]) => (
+            <Section key={id} id={id} title={label}>
+              <div className="rc-panel" style={{ color: "var(--rc-dim)", fontSize: 13 }}>
+                This section is part of the model rebuild and lands in a later step.
+              </div>
+            </Section>
+          ))}
         </div>
       </div>
     </div>
+  );
+}
+
+function Dashboard({ outputs }: { outputs: ReturnType<typeof computeModel> }) {
+  const [Y1, Y2, Y3] = outputs.years;
+  const years = [Y1, Y2, Y3];
+
+  const monthly = outputs.monthly.map((r) => ({
+    m: `M${r.month}`,
+    disbursed: r.disbursed,
+    collections: r.emiCollection,
+    book: r.receivablesBook,
+  }));
+
+  const yearRows = years.map((y, i) => ({
+    year: `Y${i + 1}`,
+    ebitda: y.ebitda,
+    income: y.totalIncome,
+    expense: y.costOfCapital + y.cac + y.techCost + y.operationsCost + y.marketingCost + y.provision,
+  }));
+
+  const ebitdaBreakeven = Y3.ebitda > 0;
+
+  return (
+    <Section id="dashboard" title="Dashboard" eyebrow="At a glance">
+      {/* Breakeven badge */}
+      <div
+        className="rc-panel"
+        style={{
+          display: "flex", alignItems: "center", gap: 12, marginBottom: 18, padding: "14px 18px",
+          borderLeft: `3px solid ${ebitdaBreakeven ? "var(--rc-lime)" : "var(--rc-amber)"}`,
+        }}
+      >
+        <span style={{ fontSize: 22 }}>{ebitdaBreakeven ? "✓" : "…"}</span>
+        <div>
+          <div style={{ fontWeight: 700, color: ebitdaBreakeven ? "var(--rc-lime)" : "var(--rc-amber)", fontSize: 15 }}>
+            {ebitdaBreakeven ? "EBITDA positive in Y3" : "Not yet EBITDA positive"}
+          </div>
+          <div className="rc-mono" style={{ fontSize: 11, color: "var(--rc-dim)" }}>
+            Y3 EBITDA {inr(Y3.ebitda)} on {inr(Y3.disbursedValue)} disbursed
+          </div>
+        </div>
+      </div>
+
+      {/* KPI strip */}
+      <div className="rc-grid-auto" style={{ marginBottom: 22 }}>
+        <KpiCard
+          label="Disbursed"
+          rows={years.map((y, i) => ({ year: `Y${i + 1}`, value: inr(y.disbursedValue), tone: CH.cyan }))}
+        />
+        <KpiCard
+          label="Loans"
+          rows={years.map((y, i) => ({ year: `Y${i + 1}`, value: num(y.disbursedCount) }))}
+        />
+        <KpiCard
+          label="Year-end Book"
+          rows={years.map((y, i) => ({ year: `Y${i + 1}`, value: inr(y.yearEndBook) }))}
+        />
+        <KpiCard
+          label="EBITDA"
+          rows={years.map((y, i) => ({
+            year: `Y${i + 1}`,
+            value: inr(y.ebitda),
+            tone: y.ebitda >= 0 ? CH.lime : CH.red,
+            strong: i === 2,
+          }))}
+        />
+      </div>
+
+      {/* Charts */}
+      <div className="rc-grid-2">
+        <ChartCard title="Monthly Disbursement vs Collections">
+          <ResponsiveContainer width="100%" height={240}>
+            <LineChart data={monthly} margin={{ top: 4, right: 8, left: 4, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke={CH.line} />
+              <XAxis dataKey="m" tick={{ fill: CH.dim, fontSize: 10 }} interval={2} />
+              <YAxis tick={{ fill: CH.dim, fontSize: 10 }} tickFormatter={crAxis} width={54} />
+              <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={tooltipItemStyle} formatter={(v: any) => inr(v)} />
+              <Legend wrapperStyle={{ fontSize: 12 }} />
+              <Line type="monotone" dataKey="disbursed" name="Disbursed" stroke={CH.cyan} strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="collections" name="Collections" stroke={CH.lime} strokeWidth={2} dot={false} />
+            </LineChart>
+          </ResponsiveContainer>
+        </ChartCard>
+
+        <ChartCard title="Receivables Book Growth">
+          <ResponsiveContainer width="100%" height={240}>
+            <AreaChart data={monthly} margin={{ top: 4, right: 8, left: 4, bottom: 0 }}>
+              <defs>
+                <linearGradient id="pbook" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={CH.cyan} stopOpacity={0.4} />
+                  <stop offset="100%" stopColor={CH.cyan} stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke={CH.line} />
+              <XAxis dataKey="m" tick={{ fill: CH.dim, fontSize: 10 }} interval={2} />
+              <YAxis tick={{ fill: CH.dim, fontSize: 10 }} tickFormatter={crAxis} width={54} />
+              <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={tooltipItemStyle} formatter={(v: any) => inr(v)} />
+              <Area type="monotone" dataKey="book" name="Book" stroke={CH.cyan} strokeWidth={2} fill="url(#pbook)" />
+            </AreaChart>
+          </ResponsiveContainer>
+        </ChartCard>
+
+        <ChartCard title="EBITDA by Year">
+          <ResponsiveContainer width="100%" height={240}>
+            <BarChart data={yearRows} margin={{ top: 4, right: 8, left: 4, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke={CH.line} />
+              <XAxis dataKey="year" tick={{ fill: CH.dim, fontSize: 11 }} />
+              <YAxis tick={{ fill: CH.dim, fontSize: 10 }} tickFormatter={crAxis} width={54} />
+              <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={tooltipItemStyle} formatter={(v: any) => inr(v)} cursor={{ fill: "var(--rc-panel2)", opacity: 0.4 }} />
+              <Bar dataKey="ebitda" name="EBITDA" radius={[4, 4, 0, 0]}>
+                {yearRows.map((r, i) => (
+                  <Cell key={i} fill={r.ebitda >= 0 ? CH.lime : CH.red} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartCard>
+
+        <ChartCard title="Income vs Expense by Year">
+          <ResponsiveContainer width="100%" height={240}>
+            <BarChart data={yearRows} margin={{ top: 4, right: 8, left: 4, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke={CH.line} />
+              <XAxis dataKey="year" tick={{ fill: CH.dim, fontSize: 11 }} />
+              <YAxis tick={{ fill: CH.dim, fontSize: 10 }} tickFormatter={crAxis} width={54} />
+              <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={tooltipItemStyle} formatter={(v: any) => inr(v)} cursor={{ fill: "var(--rc-panel2)", opacity: 0.4 }} />
+              <Legend wrapperStyle={{ fontSize: 12 }} />
+              <Bar dataKey="income" name="Income" fill={CH.cyan} radius={[4, 4, 0, 0]} />
+              <Bar dataKey="expense" name="Expense" fill={CH.amber} radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartCard>
+      </div>
+    </Section>
   );
 }
