@@ -63,6 +63,83 @@ export function ChartCard({ title, children }: { title: string; children: React.
   );
 }
 
+// Round away binary-float noise for display (e.g. 0.19*100 -> 19, not 18.9999).
+export function clean(n: number, dp = 6): number {
+  const f = Math.pow(10, dp);
+  return Math.round(n * f) / f;
+}
+
+// A driver: label + numeric input (in display units) beside a range slider.
+// `scale` converts stored value <-> display value (e.g. 100 for a fraction shown as %).
+export function DriverInput({
+  label, value, onChange, min, max, step, unit = "", scale = 1, dp = 2,
+}: {
+  label: string;
+  value: number;
+  onChange: (v: number) => void;
+  min: number;
+  max: number;
+  step: number;
+  unit?: string;
+  scale?: number;
+  dp?: number;
+}) {
+  const disp = clean(value * scale, dp);
+  const set = (d: number) => onChange(d / scale);
+  return (
+    <div style={{ marginBottom: 16 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6, gap: 8 }}>
+        <span style={{ fontSize: 13, color: "var(--rc-dim)" }}>{label}</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <input
+            className="rc-cell-input"
+            style={{ maxWidth: 92 }}
+            type="number"
+            value={disp}
+            min={min * scale}
+            max={max * scale}
+            step={step * scale}
+            onChange={(e) => set(Number(e.target.value))}
+          />
+          {unit && <span className="rc-mono" style={{ fontSize: 12, color: "var(--rc-dim)", width: 18 }}>{unit}</span>}
+        </div>
+      </div>
+      <input
+        type="range"
+        min={min * scale}
+        max={max * scale}
+        step={step * scale}
+        value={disp}
+        onChange={(e) => set(Number(e.target.value))}
+        style={{ width: "100%", accentColor: "var(--rc-cyan)" }}
+      />
+    </div>
+  );
+}
+
+// A numeric table/grid cell input. Stores in base units; edits in display units via `scale`.
+export function NumCell({
+  value, onChange, step = 1, scale = 1, dp = 2, width = 100,
+}: {
+  value: number;
+  onChange: (v: number) => void;
+  step?: number;
+  scale?: number;
+  dp?: number;
+  width?: number;
+}) {
+  return (
+    <input
+      className="rc-cell-input"
+      style={{ maxWidth: width }}
+      type="number"
+      value={clean(value * scale, dp)}
+      step={step}
+      onChange={(e) => onChange(Number(e.target.value) / scale)}
+    />
+  );
+}
+
 // KPI card showing one metric across Y1/Y2/Y3.
 export function KpiCard({
   label,

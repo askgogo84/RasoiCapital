@@ -12,6 +12,7 @@ import { computeModel } from "@/lib/model/engine";
 import { DEFAULT_STATE, deriveInputs, type ModelState } from "./state";
 import { inr, crAxis, num } from "./format";
 import { CH, tooltipStyle, tooltipLabelStyle, tooltipItemStyle, Section, ChartCard, KpiCard } from "./ui";
+import { LoanEngine } from "./sections/LoanEngine";
 
 const SECTIONS: [string, string][] = [
   ["dashboard", "Dashboard"],
@@ -46,7 +47,7 @@ function useScrollSpy(ids: string[]) {
 }
 
 export default function ProjectionsPage() {
-  const [state] = useState<ModelState>(() => JSON.parse(JSON.stringify(DEFAULT_STATE)));
+  const [state, setState] = useState<ModelState>(() => JSON.parse(JSON.stringify(DEFAULT_STATE)));
   const inputs = useMemo(() => deriveInputs(state), [state]);
   const outputs = useMemo(() => computeModel(inputs), [inputs]);
   const active = useScrollSpy(SECTION_IDS);
@@ -72,8 +73,10 @@ export default function ProjectionsPage() {
         <div style={{ minWidth: 0 }}>
           <Dashboard outputs={outputs} />
 
+          <LoanEngine state={state} setState={setState} outputs={outputs} />
+
           {/* Sections below are built in later phases of this rebuild. */}
-          {SECTIONS.slice(1).map(([id, label]) => (
+          {SECTIONS.filter(([id]) => !["dashboard", "loan-engine"].includes(id)).map(([id, label]) => (
             <Section key={id} id={id} title={label}>
               <div className="rc-panel" style={{ color: "var(--rc-dim)", fontSize: 13 }}>
                 This section is part of the model rebuild and lands in a later step.
