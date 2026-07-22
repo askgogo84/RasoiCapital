@@ -1,0 +1,724 @@
+{
+ "operations": {
+  "roles": [
+   {
+    "role": "Credit Manager",
+    "rate": 3000000,
+    "heads": [
+     1,
+     2,
+     4
+    ]
+   },
+   {
+    "role": "Credit Executive",
+    "rate": 500000,
+    "heads": [
+     1,
+     2,
+     4
+    ]
+   },
+   {
+    "role": "Regulatory/Legal Manager",
+    "rate": 3000000,
+    "heads": [
+     1,
+     2,
+     3
+    ]
+   },
+   {
+    "role": "Regulatory/Legal Executive",
+    "rate": 500000,
+    "heads": [
+     1,
+     2,
+     3
+    ]
+   },
+   {
+    "role": "Marketing Manager",
+    "rate": 3000000,
+    "heads": [
+     1,
+     2,
+     3
+    ]
+   },
+   {
+    "role": "Field Executive",
+    "rate": 300000,
+    "heads": [
+     3,
+     8,
+     12
+    ]
+   },
+   {
+    "role": "Customer Service/Sales Executives",
+    "rate": 240000,
+    "heads": [
+     2,
+     20,
+     50
+    ]
+   },
+   {
+    "role": "Customer Service Manager",
+    "rate": 2500000,
+    "heads": [
+     1,
+     1,
+     2
+    ]
+   },
+   {
+    "role": "Finance & Accounts Manager",
+    "rate": 3000000,
+    "heads": [
+     1,
+     2,
+     3
+    ]
+   },
+   {
+    "role": "Accounts Executive",
+    "rate": 300000,
+    "heads": [
+     1,
+     2,
+     4
+    ]
+   },
+   {
+    "role": "HR Manager",
+    "rate": 3000000,
+    "heads": [
+     1,
+     1,
+     2
+    ]
+   },
+   {
+    "role": "HR Executive",
+    "rate": 300000,
+    "heads": [
+     1,
+     2,
+     3
+    ]
+   },
+   {
+    "role": "Office Staff/Security",
+    "rate": 200000,
+    "heads": [
+     2,
+     4,
+     6
+    ]
+   },
+   {
+    "role": "Director",
+    "rate": 5000000,
+    "heads": [
+     5,
+     5,
+     5
+    ]
+   }
+  ],
+  "overheads": [
+   {
+    "item": "Regulatory",
+    "y": [
+     1800000,
+     11400000,
+     33600000
+    ]
+   },
+   {
+    "item": "Maintenance Cost",
+    "y": [
+     900000,
+     5700000,
+     33600000
+    ]
+   },
+   {
+    "item": "Travelling Expense (Promoters)",
+    "y": [
+     1800000,
+     1980000.0000000002,
+     1980000.0000000002
+    ]
+   },
+   {
+    "item": "Employee Engagement",
+    "y": [
+     2400000,
+     2640000,
+     2904000.0000000005
+    ]
+   },
+   {
+    "item": "Legal Cost",
+    "y": [
+     1200000,
+     1320000,
+     1452000.0000000002
+    ]
+   },
+   {
+    "item": "Laptop /Tech equip cost",
+    "y": [
+     3000000,
+     0,
+     0
+    ]
+   },
+   {
+    "item": "Insurance Cost",
+    "y": [
+     100000,
+     0,
+     0
+    ]
+   }
+  ],
+  "grandTotal": [
+   34860000,
+   104630000.00000001,
+   207901000
+  ]
+ },
+ "tech": {
+  "items": [
+   {
+    "item": "1.  SALARIES  (Hired team \u2014 Bengaluru CTC)",
+    "y": [
+     0,
+     0,
+     0
+    ]
+   },
+   {
+    "item": "  Tech Lead / Architect",
+    "y": [
+     32.040000000000006,
+     0,
+     0
+    ]
+   },
+   {
+    "item": "  React Native Developer (\u00d72)",
+    "y": [
+     32.040000000000006,
+     0,
+     0
+    ]
+   },
+   {
+    "item": "  Backend Engineer Node (\u00d72)",
+    "y": [
+     32.040000000000006,
+     0,
+     0
+    ]
+   },
+   {
+    "item": "  Product Manager",
+    "y": [
+     18,
+     0,
+     0
+    ]
+   },
+   {
+    "item": "  UI/UX Designer",
+    "y": [
+     12,
+     0,
+     0
+    ]
+   },
+   {
+    "item": "  ML / AI Engineer",
+    "y": [
+     22,
+     0,
+     0
+    ]
+   },
+   {
+    "item": "  Backend Engineer Python",
+    "y": [
+     14.63,
+     0,
+     0
+    ]
+   },
+   {
+    "item": "  Frontend Dev (Next.js)",
+    "y": [
+     12.87,
+     0,
+     0
+    ]
+   },
+   {
+    "item": "  QA Engineer",
+    "y": [
+     11,
+     0,
+     0
+    ]
+   },
+   {
+    "item": "  DevOps Engineer",
+    "y": [
+     13.3,
+     0,
+     0
+    ]
+   },
+   {
+    "item": "SALARY SUBTOTAL",
+    "y": [
+     199.92000000000002,
+     228.88799999999998,
+     251.7768
+    ]
+   },
+   {
+    "item": "2.  CLOUD INFRASTRUCTURE & THIRD-PARTY APIS",
+    "y": [
+     0,
+     0,
+     0
+    ]
+   },
+   {
+    "item": "  AWS Dev + Staging Environment",
+    "y": [
+     9.000000000000002,
+     0,
+     0
+    ]
+   },
+   {
+    "item": "  AWS Production Environment",
+    "y": [
+     9.1,
+     0,
+     0
+    ]
+   },
+   {
+    "item": "  Perfios / Finbit (Bank Stmt)",
+    "y": [
+     5.6,
+     0,
+     0
+    ]
+   },
+   {
+    "item": "  DigiLocker / eKYC API",
+    "y": [
+     2.8999999999999995,
+     0,
+     0
+    ]
+   },
+   {
+    "item": "  CIBIL / Equifax API",
+    "y": [
+     2.5999999999999996,
+     0,
+     0
+    ]
+   },
+   {
+    "item": "  SMS / WhatsApp (MSG91)",
+    "y": [
+     2.6999999999999997,
+     0,
+     0
+    ]
+   },
+   {
+    "item": "  Razorpay / Cashfree Setup",
+    "y": [
+     0.30000000000000004,
+     0,
+     0
+    ]
+   },
+   {
+    "item": "  Monitoring (Sentry + Datadog)",
+    "y": [
+     1.9999999999999998,
+     0,
+     0
+    ]
+   },
+   {
+    "item": "  Dev Tools (GitHub, Figma etc)",
+    "y": [
+     1.2,
+     0,
+     0
+    ]
+   },
+   {
+    "item": "  Anthropic Claude API",
+    "y": [
+     3.0999999999999996,
+     0,
+     0
+    ]
+   },
+   {
+    "item": "Castler",
+    "y": [
+     0,
+     0,
+     0
+    ]
+   },
+   {
+    "item": "  Google Maps / Geo API",
+    "y": [
+     1.0999999999999999,
+     0,
+     0
+    ]
+   },
+   {
+    "item": "INFRA + API SUBTOTAL",
+    "y": [
+     39.60000000000001,
+     171.60000000000002,
+     396
+    ]
+   }
+  ],
+  "totalLakh": [
+   239.52000000000004,
+   400.488,
+   647.7768
+  ]
+ },
+ "marketing": {
+  "items": [
+   {
+    "item": "Bangalore - Sponsorship",
+    "y": [
+     2000000,
+     2200000,
+     2420000
+    ]
+   },
+   {
+    "item": "Pune - Sponsorship",
+    "y": [
+     2000000,
+     2200000,
+     2420000
+    ]
+   },
+   {
+    "item": "Delhi - Sponsorship",
+    "y": [
+     2000000,
+     2200000,
+     2420000
+    ]
+   },
+   {
+    "item": "City 4 - Sponsorship",
+    "y": [
+     0,
+     2200000,
+     2420000
+    ]
+   },
+   {
+    "item": "City 5 - Sponsorship",
+    "y": [
+     0,
+     2200000,
+     2420000
+    ]
+   },
+   {
+    "item": "City 6 - Sponsorship",
+    "y": [
+     0,
+     2200000,
+     2420000
+    ]
+   },
+   {
+    "item": "City 7 - Sponsorship",
+    "y": [
+     0,
+     2200000,
+     2420000
+    ]
+   },
+   {
+    "item": "City 8 - Sponsorship",
+    "y": [
+     0,
+     0,
+     2420000
+    ]
+   },
+   {
+    "item": "City 9 - Sponsorship",
+    "y": [
+     0,
+     0,
+     2420000
+    ]
+   },
+   {
+    "item": "City 10 - Sponsorship",
+    "y": [
+     0,
+     0,
+     2420000
+    ]
+   },
+   {
+    "item": "City 11- Sponsorship",
+    "y": [
+     0,
+     0,
+     2420000
+    ]
+   },
+   {
+    "item": "City 12- Sponsorship",
+    "y": [
+     0,
+     0,
+     2420000
+    ]
+   },
+   {
+    "item": "Branding",
+    "y": [
+     1200000,
+     2400000,
+     4800000
+    ]
+   },
+   {
+    "item": "Misc",
+    "y": [
+     600000,
+     1200000,
+     2400000
+    ]
+   }
+  ],
+  "total": [
+   7800000,
+   19000000,
+   36240000
+  ]
+ },
+ "setup": {
+  "items": [
+   {
+    "item": "Company Formation",
+    "y": [
+     150000,
+     0,
+     0
+    ]
+   },
+   {
+    "item": "Brand Development",
+    "y": [
+     100000,
+     0,
+     0
+    ]
+   },
+   {
+    "item": "Laptops",
+    "y": [
+     1950000,
+     1650000,
+     4400000
+    ]
+   },
+   {
+    "item": "UI/UX Design (contract designer)",
+    "y": [
+     400000,
+     0,
+     0
+    ]
+   },
+   {
+    "item": "Security VAPT Audit",
+    "y": [
+     250000,
+     0,
+     0
+    ]
+   },
+   {
+    "item": "Office Set-Up",
+    "y": [
+     5000000,
+     2750000,
+     3125000
+    ]
+   }
+  ],
+  "total": [
+   7850000,
+   1650000,
+   7525000
+  ]
+ },
+ "cities": [
+  {
+   "city": "Bangalore",
+   "loans": [
+    1000,
+    2000,
+    3000
+   ]
+  },
+  {
+   "city": "Pune",
+   "loans": [
+    1000,
+    1000,
+    3000
+   ]
+  },
+  {
+   "city": "Delhi",
+   "loans": [
+    1000,
+    2000,
+    3000
+   ]
+  },
+  {
+   "city": "Gurgaon",
+   "loans": [
+    0,
+    1000,
+    2000
+   ]
+  },
+  {
+   "city": "Mumbai",
+   "loans": [
+    0,
+    2000,
+    3000
+   ]
+  },
+  {
+   "city": "Ahmedabad",
+   "loans": [
+    0,
+    2000,
+    3000
+   ]
+  },
+  {
+   "city": "Chennai",
+   "loans": [
+    0,
+    2000,
+    3000
+   ]
+  },
+  {
+   "city": "Kochi",
+   "loans": [
+    0,
+    1000,
+    2000
+   ]
+  },
+  {
+   "city": "Kolkata",
+   "loans": [
+    0,
+    0,
+    2000
+   ]
+  },
+  {
+   "city": "Chandigarh",
+   "loans": [
+    0,
+    0,
+    2000
+   ]
+  },
+  {
+   "city": "Indore",
+   "loans": [
+    0,
+    0,
+    2000
+   ]
+  },
+  {
+   "city": "Jaipur",
+   "loans": [
+    0,
+    0,
+    2000
+   ]
+  }
+ ],
+ "provisioning": {
+  "mix": [
+   {
+    "type": "Standard",
+    "rate": 0.0025,
+    "share": [
+     0.85,
+     0.87,
+     0.905
+    ]
+   },
+   {
+    "type": "Sub-standard (NPA)",
+    "rate": 0.1,
+    "share": [
+     0.15,
+     0.1,
+     0.07
+    ]
+   },
+   {
+    "type": "Doubtful & Loss",
+    "rate": 1.0,
+    "share": [
+     0.0,
+     0.03,
+     0.025
+    ]
+   }
+  ],
+  "blended": [
+   0.017125,
+   0.042175000000000004,
+   0.0342625
+  ]
+ }
+}
