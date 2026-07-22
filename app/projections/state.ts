@@ -18,7 +18,7 @@ import type { ModelInputs } from "@/lib/model/engine";
 import { DEFAULT_INPUTS, WORKBOOK } from "@/lib/model/defaults";
 
 export type Y3 = [number, number, number];
-export type Row = { item: string; y: number[] };          // y = [Y1,Y2,Y3]
+export type Row = { item: string; y: number[]; header?: boolean }; // y = [Y1,Y2,Y3]
 export type Role = { role: string; rate: number; heads: number[] };
 export type City = { city: string; loans: number[] };
 export type MixRow = { type: string; rate: number; share: number[] };
@@ -53,6 +53,36 @@ const clone = <T,>(x: T): T => JSON.parse(JSON.stringify(x));
 const overheadsSum = (y: number) =>
   w.operations.overheads.reduce((s: number, r: any) => s + (r.y[y] ?? 0), 0);
 
+// The tech sheet only carries Y2/Y3 growth on the two SUBTOTAL rows (leaf rows
+// are Y1-only). Distribute each subtotal's Y2/Y3 across its leaves proportional
+// to their Y1 weight so every leaf is fully editable AND Σ leaves == totalLakh
+// exactly (verified). Header rows ("1. SALARIES", "2. CLOUD INFRA...") are kept
+// as non-editable group labels; subtotal rows are consumed, not emitted.
+const isTechHeader = (it: string) => /^\s*\d+\.\s/.test(it);
+const isSubtotal = (it: string) => /SUBTOTAL/i.test(it);
+function buildTechLeaves(items: any[]): Row[] {
+  const out: Row[] = [];
+  let leaves: Row[] = [];
+  for (const r of items) {
+    if (isTechHeader(r.item)) {
+      out.push({ item: r.item, y: [0, 0, 0], header: true });
+      leaves = [];
+    } else if (isSubtotal(r.item)) {
+      const y1 = leaves.reduce((s, l) => s + l.y[0], 0) || 1;
+      for (const l of leaves) {
+        l.y[1] = r.y[1] * (l.y[0] / y1);
+        l.y[2] = r.y[2] * (l.y[0] / y1);
+      }
+      leaves = [];
+    } else {
+      const leaf: Row = { item: r.item, y: [r.y[0], 0, 0] };
+      out.push(leaf);
+      leaves.push(leaf);
+    }
+  }
+  return out;
+}
+
 export function makeDefaultState(): ModelState {
   return {
     casesPerMonth: [...DEFAULT_INPUTS.casesPerMonth],
@@ -62,7 +92,7 @@ export function makeDefaultState(): ModelState {
     processingFeePct: DEFAULT_INPUTS.processingFeePct,
     costOfCapitalPct: DEFAULT_INPUTS.costOfCapitalPct,
     cacPct: DEFAULT_INPUTS.cacPct,
-    tech: w.tech.items.map((r: any) => ({ item: r.item, y: [...r.y] })),
+    tech: buildTechLeaves(w.tech.items),
     operations: {
       roles: w.operations.roles.map((r: any) => ({ role: r.role, rate: r.rate, heads: [...r.heads] })),
       overheads: w.operations.overheads.map((r: any) => ({ item: r.item, y: [...r.y] })),
@@ -78,11 +108,9 @@ export function makeDefaultState(): ModelState {
 export const DEFAULT_STATE: ModelState = makeDefaultState();
 
 // ---- derived section totals ----
-const isSubtotal = (item: string) => /SUBTOTAL/i.test(item);
-
+// tech rows are stored in ₹ lakhs; sum the leaf rows (skip group-header rows).
 export function techTotals(rows: Row[]): number[] {
-  const sub = rows.filter((r) => isSubtotal(r.item));
-  return [0, 1, 2].map((y) => sub.reduce((s, r) => s + (r.y[y] ?? 0), 0) * 1e5);
+  return [0, 1, 2].map((y) => rows.filter((r) => !r.header).reduce((s, r) => s + (r.y[y] ?? 0), 0) * 1e5);
 }
 export function opsTotals(op: OperationsState): number[] {
   return [0, 1, 2].map(

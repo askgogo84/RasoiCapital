@@ -140,6 +140,72 @@ export function NumCell({
   );
 }
 
+// An editable money table. Cells store base units; `unitScale` converts base ->
+// display (₹ lakh): tech stores lakhs (unitScale 1), rupee tables use 1e-5.
+// Header rows (row.header) render as non-editable group labels. The footer shows
+// the per-year total in ₹ (base × unitScale × 1e5).
+export function MoneyTable({
+  rows,
+  onCell,
+  unitScale,
+  firstCol = "Item",
+  colLabels = ["Year 1", "Year 2", "Year 3"],
+  totalLabel = "Total",
+  fmtTotal,
+}: {
+  rows: { item: string; y: number[]; header?: boolean }[];
+  onCell: (rowIdx: number, yearIdx: number, base: number) => void;
+  unitScale: number;
+  firstCol?: string;
+  colLabels?: string[];
+  totalLabel?: string;
+  fmtTotal: (rupees: number) => string;
+}) {
+  const totalsRupee = [0, 1, 2].map(
+    (y) => rows.filter((r) => !r.header).reduce((s, r) => s + (r.y[y] ?? 0), 0) * unitScale * 1e5,
+  );
+  return (
+    <div className="rc-table-scroll">
+      <table className="rc-mtable">
+        <thead>
+          <tr>
+            <th>{firstCol}</th>
+            {colLabels.map((c) => (
+              <th key={c}>{c} <span style={{ opacity: 0.6 }}>₹L</span></th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r, i) =>
+            r.header ? (
+              <tr key={i} className="rc-row-head">
+                <td colSpan={4}>{r.item}</td>
+              </tr>
+            ) : (
+              <tr key={i}>
+                <td>{r.item}</td>
+                {[0, 1, 2].map((y) => (
+                  <td key={y}>
+                    <NumCell value={r.y[y] ?? 0} onChange={(v) => onCell(i, y, v)} scale={unitScale} step={1} dp={2} width={88} />
+                  </td>
+                ))}
+              </tr>
+            ),
+          )}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td>{totalLabel}</td>
+            {totalsRupee.map((t, y) => (
+              <td key={y} className="rc-mono" style={{ color: "var(--rc-cyan)" }}>{fmtTotal(t)}</td>
+            ))}
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  );
+}
+
 // KPI card showing one metric across Y1/Y2/Y3.
 export function KpiCard({
   label,

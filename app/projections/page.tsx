@@ -13,6 +13,7 @@ import { DEFAULT_STATE, deriveInputs, type ModelState } from "./state";
 import { inr, crAxis, num } from "./format";
 import { CH, tooltipStyle, tooltipLabelStyle, tooltipItemStyle, Section, ChartCard, KpiCard } from "./ui";
 import { LoanEngine } from "./sections/LoanEngine";
+import { TechCost, Operations, Marketing, Setup } from "./sections/costs";
 
 const SECTIONS: [string, string][] = [
   ["dashboard", "Dashboard"],
@@ -75,17 +76,28 @@ export default function ProjectionsPage() {
 
           <LoanEngine state={state} setState={setState} outputs={outputs} />
 
-          {/* Sections below are built in later phases of this rebuild. */}
-          {SECTIONS.filter(([id]) => !["dashboard", "loan-engine"].includes(id)).map(([id, label]) => (
-            <Section key={id} id={id} title={label}>
-              <div className="rc-panel" style={{ color: "var(--rc-dim)", fontSize: 13 }}>
-                This section is part of the model rebuild and lands in a later step.
-              </div>
-            </Section>
-          ))}
+          <Stub id="cities" title="City Break Up" />
+          <Stub id="pnl" title="P&L" />
+
+          <TechCost state={state} setState={setState} />
+          <Operations state={state} setState={setState} />
+          <Marketing state={state} setState={setState} />
+          <Setup state={state} setState={setState} />
+
+          <Stub id="provisioning" title="Bad-Debt Provisioning" />
         </div>
       </div>
     </div>
+  );
+}
+
+function Stub({ id, title }: { id: string; title: string }) {
+  return (
+    <Section id={id} title={title}>
+      <div className="rc-panel" style={{ color: "var(--rc-dim)", fontSize: 13 }}>
+        This section is part of the model rebuild and lands in a later step.
+      </div>
+    </Section>
   );
 }
 
