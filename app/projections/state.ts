@@ -37,6 +37,17 @@ export interface Allocation {
   leverageMultiple: number; // bank leverage on the deposit
 }
 
+// Per-loan variable-cost RATIO assumptions for the Unit Economics view only.
+// Fractions of the disbursed amount, flat across years. Editable, but they do
+// NOT feed computeModel / the P&L (engine costs come from the Tech / Operations
+// / Marketing / Provision sheets) — they only move the per-loan margin view.
+export interface UnitEconAssumptions {
+  tech: number;
+  collection: number;
+  opex: number;
+  badDebts: number;
+}
+
 export interface ModelState {
   // ---- Loan engine drivers ----
   casesPerMonth: number[]; // length 36
@@ -54,6 +65,8 @@ export interface ModelState {
   provisioning: Y3; // blended RBI rate per year
   // ---- Capital allocation (runway view; not fed to the engine) ----
   allocation: Allocation;
+  // ---- Unit-economics assumptions (per-loan view only; not fed to the engine) ----
+  unitEconAssumptions: UnitEconAssumptions;
 }
 
 const w: any = WORKBOOK;
@@ -108,6 +121,12 @@ export function makeDefaultState(): ModelState {
     cities: w.cities.map((c: any) => ({ city: c.city, loans: [...c.loans] })),
     provisioning: [...w.provisioning.blended] as Y3,
     allocation: { raise: 600_000_000, lendingDeposit: 300_000_000, leverageMultiple: 5 },
+    unitEconAssumptions: {
+      tech: w.unitEconomics.directCost.tech,
+      collection: w.unitEconomics.directCost.collection,
+      opex: w.unitEconomics.directCost.opex,
+      badDebts: w.unitEconomics.directCost.badDebts,
+    },
   };
 }
 
@@ -193,8 +212,8 @@ export function deriveCapital(inputs: ModelInputs, outputs: ModelOutputs, alloc:
 // ---- Unit economics (per-loan margin, by disbursal year) ----
 // Everything is a fraction of the disbursed amount. Interest / PF / Cost of
 // Capital are read LIVE from ModelInputs (so Loan Engine edits flow through);
-// tech / collection / opex / bad-debts are per-loan variable-cost ASSUMPTIONS
-// that are not in the engine and stay sourced from v3_defaults.json.
+// tech / collection / opex / bad-debts come from the editable UnitEconAssumptions
+// (per-loan ratios that are NOT in the engine — they only move this view).
 export interface UnitEcoCol {
   interest: number; pf: number; totalIncome: number;
   coc: number; tech: number; collection: number; opex: number; badDebts: number;
@@ -202,14 +221,14 @@ export interface UnitEcoCol {
 }
 export interface UnitEcoReport { y1: UnitEcoCol; y2: UnitEcoCol; y3: UnitEcoCol; }
 
-export function deriveUnitEconomics(inputs: ModelInputs): UnitEcoReport {
-  const dc: any = (WORKBOOK as any).unitEconomics.directCost; // static per-loan assumptions
+export function deriveUnitEconomics(inputs: ModelInputs, assumptions: UnitEconAssumptions): UnitEcoReport {
+  const a = assumptions;
   const col = (y: number): UnitEcoCol => {
     const interest = inputs.annualRate;        // scalar today → flat across years
     const pf = inputs.processingFeePct;        // scalar today → flat across years
     const totalIncome = interest + pf;
     const coc = inputs.costOfCapitalByYear[y] ?? 0; // the per-year, live one
-    const tech = dc.tech, collection = dc.collection, opex = dc.opex, badDebts = dc.badDebts;
+    const tech = a.tech, collection = a.collection, opex = a.opex, badDebts = a.badDebts;
     const totalDirectCost = coc + tech + collection + opex + badDebts;
     return { interest, pf, totalIncome, coc, tech, collection, opex, badDebts, totalDirectCost, contributionMargin: totalIncome - totalDirectCost };
   };

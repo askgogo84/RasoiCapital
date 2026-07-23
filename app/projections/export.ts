@@ -143,7 +143,7 @@ export function exportModel(state: ModelState, outputs: ReturnType<typeof comput
   add("Provisioning", prov);
 
   // ---- Unit Economics (per-loan margin, live by disbursal year) ----
-  const uec = deriveUnitEconomics(deriveInputs(state));
+  const uec = deriveUnitEconomics(deriveInputs(state), state.unitEconAssumptions);
   const p2 = (v: number) => +(v * 100).toFixed(2);
   const ur = (label: string, sel: (c: typeof uec.y1) => number, note = "") =>
     [label, p2(sel(uec.y1)), p2(sel(uec.y2)), p2(sel(uec.y3)), note] as (string | number)[];
@@ -157,10 +157,10 @@ export function exportModel(state: ModelState, outputs: ReturnType<typeof comput
     ur("Total Income", (c) => c.totalIncome),
     ["DIRECT COST", "", "", "", ""],
     ur("Cost of Capital", (c) => c.coc, "live · Loan Engine costOfCapitalByYear"),
-    ur("Tech", (c) => c.tech, "assumption (static)"),
-    ur("Collection", (c) => c.collection, "assumption (static)"),
-    ur("Opex", (c) => c.opex, "assumption (static)"),
-    ur("Bad Debts", (c) => c.badDebts, "assumption (static)"),
+    ur("Tech", (c) => c.tech, "editable assumption (view only)"),
+    ur("Collection", (c) => c.collection, "editable assumption (view only)"),
+    ur("Opex", (c) => c.opex, "editable assumption (view only)"),
+    ur("Bad Debts", (c) => c.badDebts, "editable assumption (view only)"),
     ur("Total Direct Cost", (c) => c.totalDirectCost),
     ur("Contribution Margin", (c) => c.contributionMargin),
   ]);
