@@ -1,5 +1,5 @@
 // app/pitch/page.tsx — Rasoi Capital investor pitch (React, in-app, terminal-themed).
-// Rewritten around weekly + Castler virtual-account collection. "Download the deck" button included.
+// Rewritten around weekly collection via a regulated virtual account. "Download the deck" button included.
 "use client";
 import { useState } from "react";
 import {
@@ -159,7 +159,7 @@ export default function PitchPage() {
           <div style={{display:"grid", gap:14}}>
             <Card accent={C.cyan}><div style={{display:"flex", justifyContent:"space-between"}}><b style={{color:C.fg}}>TAM</b><span className="rc-mono" style={{color:C.cyan}}>₹95,000+ Cr</span></div><p style={{fontSize:13, color:C.dim, marginTop:6}}>Working capital + expansion credit across 14M+ outlets (~12% of GMV)</p></Card>
             <Card accent={C.cyan}><div style={{display:"flex", justifyContent:"space-between"}}><b style={{color:C.fg}}>SAM</b><span className="rc-mono" style={{color:C.cyan}}>₹28,000 Cr</span></div><p style={{fontSize:13, color:C.dim, marginTop:6}}>Customer-facing outlets in top 20 cities with digital payment trails</p></Card>
-            <Card accent={C.lime}><div style={{display:"flex", justifyContent:"space-between"}}><b style={{color:C.fg}}>SOM (5-yr)</b><span className="rc-mono" style={{color:C.lime}}>₹1,500 Cr AUM</span></div><p style={{fontSize:13, color:C.dim, marginTop:6}}>~30,000 active loans at ₹5L avg — just 0.2% of outlets</p></Card>
+            <Card accent={C.lime}><div style={{display:"flex", justifyContent:"space-between"}}><b style={{color:C.fg}}>SOM (3-yr)</b><span className="rc-mono" style={{color:C.lime}}>₹1,700 Cr AUM</span></div><p style={{fontSize:13, color:C.dim, marginTop:6}}>~26,000 active loans at ₹6.5L avg — just 0.2% of outlets</p></Card>
           </div>
         </div>
       </Section>
@@ -173,14 +173,14 @@ export default function PitchPage() {
             <ul style={{fontSize:13.5, color:C.dim, lineHeight:1.6, marginTop:10, paddingLeft:16}}>
               <li>6-factor HORECA scoring — margin, growth, sales, location, ambience, bureau</li>
               <li>Reconciles bank + aggregator data; scores the agreement, not the claim</li>
-              <li>Claude AI writes a full, auditable credit memo for every decision</li>
+              <li>Rasoi IQ writes a full, auditable credit memo for every decision</li>
             </ul>
           </Card>
           <Card accent={C.violet}>
             <div style={{fontSize:26, marginBottom:8}}>🏦</div>
             <b style={{color:C.fg}}>Collection at the source</b>
             <ul style={{fontSize:13.5, color:C.dim, lineHeight:1.6, marginTop:10, paddingLeft:16}}>
-              <li>A virtual account (via Castler) sits in the borrower's settlement path</li>
+              <li>A regulated virtual account sits in the borrower's settlement path</li>
               <li>Swiggy/Zomato payouts route in; EMI auto-deducted <b>before</b> the borrower is paid</li>
               <li>Remainder swept to the restaurant — repayment is structural, not behavioural</li>
             </ul>
@@ -201,12 +201,12 @@ export default function PitchPage() {
       <Section id="collection" eyebrow="⭐ The collection moat" title="We don't chase repayment. We collect at the source.">
         <p style={{color:C.dim, fontSize:16, maxWidth:820, marginBottom:32, marginTop:-8}}>
           Every competitor debits the borrower's account and hopes the balance is there. We take our EMI
-          <b style={{color:C.fg}}> before the money ever reaches the borrower</b> — powered by Castler, the escrow rails that
-          Mahindra Finance, IIFL and Oxyzo already run on.
+          <b style={{color:C.fg}}> before the money ever reaches the borrower</b> — powered by regulated virtual-account
+          escrow rails, the same architecture Mahindra Finance, IIFL and Oxyzo already run on.
         </p>
         {/* 3-step mechanism */}
         <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(min(220px,100%),1fr))", gap:16, marginBottom:24}}>
-          <Card accent={C.violet}><div className="rc-mono" style={{color:C.violet, fontSize:13, marginBottom:6}}>STEP 1</div><b style={{color:C.fg}}>Virtual account, in the borrower's name</b><p style={{fontSize:13, color:C.dim, marginTop:8, lineHeight:1.5}}>Opened via Castler at loan origination. It's theirs — but it sits in the settlement path.</p></Card>
+          <Card accent={C.violet}><div className="rc-mono" style={{color:C.violet, fontSize:13, marginBottom:6}}>STEP 1</div><b style={{color:C.fg}}>Virtual account, in the borrower's name</b><p style={{fontSize:13, color:C.dim, marginTop:8, lineHeight:1.5}}>A regulated virtual account opened at loan origination. It's theirs — but it sits in the settlement path.</p></Card>
           <Card accent={C.violet}><div className="rc-mono" style={{color:C.violet, fontSize:13, marginBottom:6}}>STEP 2</div><b style={{color:C.fg}}>Aggregator payouts route through it</b><p style={{fontSize:13, color:C.dim, marginTop:8, lineHeight:1.5}}>Swiggy & Zomato settlements land here — where 30–60% of a modern outlet's revenue already flows.</p></Card>
           <Card accent={C.violet}><div className="rc-mono" style={{color:C.violet, fontSize:13, marginBottom:6}}>STEP 3</div><b style={{color:C.fg}}>Deduct first, sweep the rest</b><p style={{fontSize:13, color:C.dim, marginTop:8, lineHeight:1.5}}>Weekly EMI auto-deducted at source; the remainder swept to the restaurant, same day.</p></Card>
         </div>
@@ -279,7 +279,7 @@ export default function PitchPage() {
                 <Row k="Loan (Cycle-1 cap)" v={`₹${loan.toLocaleString("en-IN")}`} />
                 <Row k="Weekly EMI (at source)" v={`≈ ₹${weekly.toLocaleString("en-IN")}/wk`} tone={C.violet} />
                 <div style={{fontSize:12, color:C.dim, marginTop:2}}>≈ ₹{daily.toLocaleString("en-IN")}/day of sales — but collected weekly at source from the settlement flow, never debited from the borrower.</div>
-                <div style={{fontSize:12, color:C.cyan, marginTop:4}}>+ Claude credit memo: weak factors · path to G</div>
+                <div style={{fontSize:12, color:C.cyan, marginTop:4}}>+ Rasoi IQ credit memo: weak factors · path to G</div>
               </div>;
             })()}
           </div>
@@ -316,7 +316,7 @@ export default function PitchPage() {
         <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(min(300px,100%),1fr))", gap:16}}>
           {[
             ["🧠","We score the business, not the paperwork","6-factor HORECA model with CIBIL as the smallest weight. That inversion approves outlets banks reject — at lower NPA.","Proprietary model calibrated to HORECA — 6-month rebuild minimum"],
-            ["🏦","We collect at the source, before the borrower is paid","Castler virtual account intercepts Swiggy/Zomato settlements; EMI deducted first. Structurally impossible to replicate on debit-time architecture.","Requires escrow/virtual-account rails + settlement routing — not retrofittable onto NACH"],
+            ["🏦","We collect at the source, before the borrower is paid","Our regulated virtual account intercepts Swiggy/Zomato settlements; EMI deducted first. Structurally impossible to replicate on debit-time architecture.","Requires escrow/virtual-account rails + settlement routing — not retrofittable onto NACH"],
             ["📡","POS + ONDC distribution — near-zero CAC","150K+ POS outlets plus a founder-built ONDC integration. Competitor field-sales CAC: ₹8–15K/loan. Ours: near zero on repeat.","Exclusive channel + founder-built ONDC rail — competitors need ground ops"],
             ["🔎","We control the pipe, not just the ping","Every rupee of a borrower's aggregator revenue flows through the account we control — live revenue data feeding the next credit cycle. Monthly lenders see 12 payments a year and hope.","Proprietary settlement-flow + labelled HORECA repayment data — cannot be bought"],
             ["🛡️","RBI-ready policy stack — live, board-reviewed","Credit policy, Collection & Recovery Policy (Fair Practices Code), bureau framework — written and board-ready. Most applicants spend 6–9 months here.","Policy stack complete before licence — 6–9 month structural head start"],
@@ -348,7 +348,7 @@ export default function PitchPage() {
                 ["HORECA-specific scoring","✗","✗","✗","Partial","✗","✓ 6-factor"],
                 ["Field intelligence (FSA)","✗","✗","✗","✗","✗","✓ Built-in"],
                 ["Collection at source","✗","✗","✗","✗","Weekly (POS)","✓ Virtual account"],
-                ["AI credit memo per loan","✗","✗","✗","✗","✗","✓ Claude"],
+                ["AI credit memo per loan","✗","✗","✗","✗","✗","✓ Rasoi IQ"],
                 ["Borrower-friendly bureau","✗","✗","✗","✗","✗","✓ Monthly-cum."],
                 ["Typical rate (SME)","12%+","18%+","19%+","Varies","20%+","18–27% risk-based"],
               ].map((row,i)=>(
@@ -381,23 +381,23 @@ export default function PitchPage() {
 
       {/* ——— BUSINESS MODEL ——— */}
       <Section id="unit" eyebrow="Business model" title="Unit economics of a single loan.">
-        <p style={{color:C.dim, fontSize:15, marginBottom:24, marginTop:-8}}>Cycle-1 illustrative · Bucket C · ₹7L · 6 months · 19% p.a. + 2.5% PF</p>
+        <p style={{color:C.dim, fontSize:15, marginBottom:24, marginTop:-8}}>Illustrative · Bucket C · ₹7L · 24 months · 19% p.a. + 2.5% PF</p>
         <div className="rc-grid-2" style={{gap:24}}>
           <div className="rc-panel">
             <div style={{display:"grid", gap:2}}>
-              <Row k="Interest income (6 mo)" v="+ ₹66,500" tone={C.lime} />
+              <Row k="Interest income (24 mo)" v="+ ₹1,46,900" tone={C.lime} />
               <Row k="Processing fee (2.5%)" v="+ ₹17,500" tone={C.lime} />
-              <Row k="Cost of debt capital (~10%)" v="− ₹35,000" tone={C.red} />
-              <Row k="Opex + FSA + collections" v="− ₹4,200" tone={C.red} />
-              <Row k="Expected credit loss (provision)" v="− ₹3,500" tone={C.red} />
+              <Row k="Cost of debt capital" v="− ₹73,400" tone={C.red} />
+              <Row k="Collection + opex" v="− ₹35,000" tone={C.red} />
+              <Row k="Expected credit loss (provision)" v="− ₹28,000" tone={C.red} />
             </div>
             <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginTop:16, padding:"14px 0 0", borderTop:`2px solid ${C.line}`}}>
-              <b style={{color:C.fg}}>Net contribution / loan / cycle</b>
-              <span className="rc-mono" style={{fontSize:22, fontWeight:700, color:C.lime}}>≈ ₹41,300</span>
+              <b style={{color:C.fg}}>Net contribution / loan</b>
+              <span className="rc-mono" style={{fontSize:22, fontWeight:700, color:C.lime}}>≈ ₹28,000</span>
             </div>
           </div>
           <div style={{display:"grid", gap:12}}>
-            <Card accent={C.cyan}><b style={{color:C.fg}}>Cycle 1</b><p style={{fontSize:12.5, color:C.dim, marginTop:4}}>6 months · prove-out · ₹7L cap</p></Card>
+            <Card accent={C.cyan}><b style={{color:C.fg}}>Cycle 1</b><p style={{fontSize:12.5, color:C.dim, marginTop:4}}>24 months · prove-out · ₹7L cap</p></Card>
             <Card accent={C.cyan}><b style={{color:C.fg}}>Cycle 2</b><p style={{fontSize:12.5, color:C.dim, marginTop:4}}>Repeat borrower · known payment history · uncapped</p></Card>
             <Card accent={C.lime}><b style={{color:C.fg}}>Cycle 3+</b><p style={{fontSize:12.5, color:C.dim, marginTop:4}}>Rate discounts via clean record · CAC ≈ ₹0 on repeats</p></Card>
           </div>
@@ -470,7 +470,7 @@ export default function PitchPage() {
       <Section id="ask" eyebrow="The ask" title="₹60 Cr — regulation-anchored, loan-deployed.">
         <div style={{display:"grid", gap:12, marginBottom:20}}>
           {[
-            ["Lending corpus (on-book AUM seed)","52%","₹14–28 Cr","First ~5,000 loans · Bengaluru → 4 cities · proves the book for debt lines & co-lending",C.lime],
+            ["Lending corpus (on-book AUM seed)","52%","₹14–28 Cr","First ~3,000 loans (₹150 Cr Y1) · Bengaluru → 4 cities · proves the book for debt lines & co-lending",C.lime],
             ["NBFC NOF + licence / acquisition","27%","₹10–12 Cr","RBI-mandated ₹10 Cr liquid NOF + shell premium — ring-fenced, not burn",C.cyan],
             ["Technology & AI","8%","₹2.5–4 Cr","FSA mobile app, RL model build-out, bank-statement APIs, LMS hardening",C.violet],
             ["Field ops & distribution","7%","₹2–3.5 Cr","FSA network in 4 cities, distributor partnerships, collections infra",C.amber],
