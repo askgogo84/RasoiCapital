@@ -3,8 +3,10 @@
 import * as XLSX from "xlsx";
 import type { computeModel, YearPL } from "@/lib/model/engine";
 import type { ModelState } from "./state";
-import { techTotals, opsTotals, sumRows, groupTotals } from "./state";
+import { techTotals, opsTotals, sumRows, groupTotals, deriveInputs, deriveCapital } from "./state";
 import { WORKBOOK } from "@/lib/model/defaults";
+
+const cr = (v: number) => +(v / 1e7).toFixed(2); // ₹ → ₹ Cr (2dp)
 
 const PL_LINES: [string, (y: YearPL) => number][] = [
   ["Disbursed", (y) => y.disbursedValue],
@@ -44,6 +46,29 @@ export function exportModel(state: ModelState, outputs: ReturnType<typeof comput
     ["EBITDA %", ...years.map((y) => +(y.ebitdaPct * 100).toFixed(2))],
     [],
     ["EMI by ticket year (₹)", ...emi],
+  ]);
+
+  // ---- Capital Allocation (same deriveCapital() the Dashboard panel uses) ----
+  const cap = deriveCapital(deriveInputs(state), outputs, state.allocation);
+  add("Capital Allocation", [
+    ["Rasoi Capital — Capital Allocation & Year-1 runway"],
+    [],
+    ["Metric", "Value (₹)", "Value (₹ Cr)"],
+    ["Total Raise", cap.raise, cr(cap.raise)],
+    ["Lending Deposit (equity base)", cap.lendingDeposit, cr(cap.lendingDeposit)],
+    ["Leverage Multiple (×)", cap.leverageMultiple, cap.leverageMultiple],
+    ["Lending Capacity (deposit × multiple)", cap.lendingCapacity, cr(cap.lendingCapacity)],
+    ["Cash Reserve (raise − deposit)", cap.cashReserve, cr(cap.cashReserve)],
+    ["Total Y1 Expense (accrual, incl provision + set-up)", cap.totalExpenseY1, cr(cap.totalExpenseY1)],
+    ["Cash Left after Y1 (reserve − net cash burn)", cap.cashLeftAfterY1, cr(cap.cashLeftAfterY1)],
+    [],
+    ["Year-1 cash-flow detail", "Value (₹)", "Value (₹ Cr)"],
+    ["Y1 Cash Expense (excl non-cash provision)", cap.cashExpenseY1, cr(cap.cashExpenseY1)],
+    ["Y1 Income (interest + processing fee)", cap.incomeY1, cr(cap.incomeY1)],
+    ["Y1 Net Cash Burn (cash expense − income)", cap.netCashBurnY1, cr(cap.netCashBurnY1)],
+    ["Y1 Provision (non-cash accrual)", cap.provisionY1, cr(cap.provisionY1)],
+    ["Y1 Disbursed (capacity check)", cap.disbursedY1, cr(cap.disbursedY1)],
+    ["Capacity covers Y1 disbursal?", cap.capacityShort ? "NO — increase deposit" : "yes", ""],
   ]);
 
   // ---- Loan Engine ----
