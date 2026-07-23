@@ -20,6 +20,18 @@ export const maxDuration = 300; // Vercel: requires plan supporting long functio
 const MAX_BYTES = 25 * 1024 * 1024;
 const CONFIDENCE_FLOOR = 0.7;
 
+// Accepted payout rails → their platform tag. "other_payout" carries a free-text
+// platform_label. All are reconciled together (pooled) against the bank statement.
+const PAYOUT_PLATFORM: Record<string, string> = {
+  zomato_payout: "zomato",
+  swiggy_payout: "swiggy",
+  ondc_payout: "ondc",
+  ownly_payout: "ownly",
+  magicpin_payout: "magicpin",
+  other_payout: "other",
+};
+const VALID_DOC_TYPES = ["bank_statement", ...Object.keys(PAYOUT_PLATFORM)];
+
 export async function POST(req: NextRequest) {
   let docId: string | null = null;
   try {
@@ -28,9 +40,10 @@ export async function POST(req: NextRequest) {
     const docType = String(form.get("doc_type") ?? "");
     const outletName = String(form.get("outlet_name") ?? "").trim();
     const applicationId = (form.get("application_id") as string) || null;
+    const platformLabel = String(form.get("platform_label") ?? "").trim();
 
     if (!file) return NextResponse.json({ error: "file is required" }, { status: 400 });
-    if (!["bank_statement", "zomato_payout", "swiggy_payout"].includes(docType))
+    if (!VALID_DOC_TYPES.includes(docType))
       return NextResponse.json({ error: "invalid doc_type" }, { status: 400 });
     if (!outletName) return NextResponse.json({ error: "outlet_name is required" }, { status: 400 });
     if (file.size > MAX_BYTES)
@@ -98,8 +111,13 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // payout docs
-    const expected = docType === "zomato_payout" ? "zomato" : "swiggy";
+    // payout docs — platform tag comes from the chosen slot; "other" carries a
+    // free-text label. This tag is authoritative when the PDF is ambiguous.
+    const basePlatform = PAYOUT_PLATFORM[docType] ?? "other";
+    const expected =
+      docType === "other_payout" && platformLabel
+        ? platformLabel.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "")
+        : basePlatform;
     const result = await parsePlatformPayout(pdfBase64, expected);
     const status = result.confidence >= CONFIDENCE_FLOOR && result.settlements.length > 0 ? "parsed" : "failed";
 

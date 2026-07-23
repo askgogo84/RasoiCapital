@@ -4,9 +4,17 @@
 
 export interface PayoutForMatch {
   id: string;
-  platform: "zomato" | "swiggy";
+  platform: string;             // zomato | swiggy | ondc | ownly | magicpin | <other>
   period_end: string | null;    // YYYY-MM-DD
   net_payout: number;
+}
+
+// A bank credit is an eligible settlement (payout) candidate if its category is
+// ANY aggregator settlement — i.e. ends in "_SETTLEMENT" (ZOMATO_SETTLEMENT,
+// SWIGGY_SETTLEMENT, ONDC_SETTLEMENT, OWNLY_SETTLEMENT, MAGICPIN_SETTLEMENT,
+// OTHER_SETTLEMENT, …). This keeps reconciliation POOLED across every platform.
+export function isSettlementCategory(category: string): boolean {
+  return typeof category === "string" && category.endsWith("_SETTLEMENT");
 }
 
 export interface BankTxnForMatch {
@@ -60,11 +68,10 @@ export function matchPayouts(
   payouts: PayoutForMatch[],
   bankTxns: BankTxnForMatch[]
 ): MatchResult {
-  // Only aggregator settlement credits are matching candidates.
+  // Only aggregator settlement credits are matching candidates — pooled across
+  // every platform (any *_SETTLEMENT category), not just Zomato/Swiggy.
   const candidates = bankTxns.filter(
-    (t) =>
-      t.direction === "credit" &&
-      (t.category === "ZOMATO_SETTLEMENT" || t.category === "SWIGGY_SETTLEMENT")
+    (t) => t.direction === "credit" && isSettlementCategory(t.category)
   );
 
   const used = new Set<string>();

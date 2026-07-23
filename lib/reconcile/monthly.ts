@@ -3,9 +3,10 @@
 // Output shape is compatible with the existing monthly_sales_summary concept.
 
 import type { BankTxnForMatch } from "./matcher";
+import { isSettlementCategory } from "./matcher";
 
 export interface PayoutMonthly {
-  platform: "zomato" | "swiggy";
+  platform: string;             // any aggregator platform (pooled)
   period_end: string | null;
   gross_sales: number | null;
   net_payout: number;
@@ -50,8 +51,7 @@ export function buildMonthlySeries(
     const platform_gross = pm.reduce((s, p) => s + (p.gross_sales ?? 0), 0);
     const platform_net = pm.reduce((s, p) => s + p.net_payout, 0);
     const bank_aggregator_credit = tm
-      .filter((t) => t.direction === "credit" &&
-        (t.category === "ZOMATO_SETTLEMENT" || t.category === "SWIGGY_SETTLEMENT"))
+      .filter((t) => t.direction === "credit" && isSettlementCategory(t.category))
       .reduce((s, t) => s + t.amount, 0);
     const dineinCredits = tm.filter(
       (t) => t.direction === "credit" &&

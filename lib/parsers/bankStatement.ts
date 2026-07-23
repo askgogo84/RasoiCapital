@@ -32,6 +32,9 @@ export function classifyTxn(description: string, direction: "credit" | "debit"):
   const d = description.toUpperCase();
   if (/ZOMATO/.test(d)) return "ZOMATO_SETTLEMENT";
   if (/SWIGGY|BUNDL/.test(d)) return "SWIGGY_SETTLEMENT";
+  if (/\bONDC\b/.test(d)) return "ONDC_SETTLEMENT";
+  if (/RAPIDO|OWNLY/.test(d)) return "OWNLY_SETTLEMENT";
+  if (/MAGICPIN/.test(d)) return "MAGICPIN_SETTLEMENT";
   if (/\bUPI\b|@OK|@YBL|@PAYTM|@IBL|BHIM/.test(d)) return "UPI";
   if (/POS |CARD|VISA|MASTERCARD|RUPAY|MSWIPE|PINELABS|RAZORPAY|PAYTM POS/.test(d)) return "CARD";
   if (/CASH DEP|CDM|CASH DEPOSIT|BY CASH/.test(d)) return "CASH_DEPOSIT";

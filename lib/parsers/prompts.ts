@@ -28,12 +28,12 @@ Rules:
 - If a page is unreadable, skip its rows and lower confidence. Never invent transactions.
 - If this document is NOT a bank statement, return {"transactions": [], "confidence": 0}.`;
 
-export const PAYOUT_PROMPT = `You are a precise parser for Indian food-delivery platform payout reports/invoices (Zomato or Swiggy, any format or period).
+export const PAYOUT_PROMPT = `You are a precise parser for Indian food-delivery / commerce aggregator payout reports/invoices (Zomato, Swiggy, ONDC, Ownly/Rapido, Magicpin, or any similar platform; any format or period).
 
 Extract EVERY settlement/payout period in this document. Respond with ONLY a JSON object, no markdown fences, no preamble:
 
 {
-  "platform": "zomato" | "swiggy" | "unknown",
+  "platform": "zomato" | "swiggy" | "ondc" | "ownly" | "magicpin" | <other lowercase platform name> | "unknown",
   "outlet_name": string | null,
   "settlements": [
     {

@@ -15,7 +15,7 @@ export interface PayoutRecord {
 }
 
 export interface PayoutParseResult {
-  platform: "zomato" | "swiggy" | "unknown";
+  platform: string;             // zomato | swiggy | ondc | ownly | magicpin | <other> | unknown
   outlet_name: string | null;
   settlements: PayoutRecord[];
   confidence: number;
@@ -33,7 +33,7 @@ function extractJson(text: string): any {
 
 export async function parsePlatformPayout(
   pdfBase64: string,
-  expectedPlatform?: "zomato" | "swiggy"
+  expectedPlatform?: string
 ): Promise<PayoutParseResult> {
   const resp = await anthropic.messages.create({
     model: "claude-sonnet-4-6",
@@ -58,9 +58,12 @@ export async function parsePlatformPayout(
     .join("\n");
 
   const raw = extractJson(text);
-  let platform: PayoutParseResult["platform"] =
-    raw.platform === "zomato" || raw.platform === "swiggy" ? raw.platform : "unknown";
-  // If the model couldn't tell but the user selected a doc_type, trust the selection with a note.
+  // Accept any non-empty platform the model reports; otherwise fall back to the
+  // upload's platform tag (authoritative when the document is ambiguous).
+  let platform: string =
+    typeof raw.platform === "string" && raw.platform && raw.platform !== "unknown"
+      ? raw.platform
+      : "unknown";
   if (platform === "unknown" && expectedPlatform) platform = expectedPlatform;
 
   const settlements: PayoutRecord[] = (raw.settlements ?? [])

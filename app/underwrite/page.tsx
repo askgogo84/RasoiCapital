@@ -10,7 +10,30 @@ import OutletPicker from "@/components/OutletPicker";
 type Provenance = "DERIVED" | "MANUAL" | "MANUAL_OVERRIDE" | "ASSUMED";
 type DocState = "idle" | "uploading" | "parsing" | "parsed" | "failed";
 
-interface DocRow { type: "bank_statement" | "zomato_payout" | "swiggy_payout"; label: string; state: DocState; detail?: string; }
+// A document slot. Bank + Zomato + Swiggy are fixed; aggregator rows are
+// repeatable and carry a chosen platform (ONDC / Ownly / Magicpin / Other→name).
+type AggPlatform = "ondc" | "ownly" | "magicpin" | "other";
+interface DocRow {
+  key: string;                 // stable react key
+  kind: "bank" | "payout" | "aggregator";
+  docType: string;             // sent to /api/parse (bank_statement | <platform>_payout)
+  label: string;
+  state: DocState;
+  detail?: string;
+  platform?: AggPlatform;      // aggregator rows only
+  platformLabel?: string;      // aggregator "other" free-text name
+}
+
+const AGG_OPTIONS: { value: AggPlatform; label: string }[] = [
+  { value: "ondc", label: "ONDC" },
+  { value: "ownly", label: "Ownly (Rapido)" },
+  { value: "magicpin", label: "Magicpin" },
+  { value: "other", label: "Other…" },
+];
+// doc_type for an aggregator row (Other maps to other_payout + a label)
+const aggDocType = (r: DocRow) => (r.platform === "other" ? "other_payout" : `${r.platform}_payout`);
+// map an existing/parsed doc_type back to a display label for resumed rows
+const platformFromDocType = (dt: string) => dt.replace(/_payout$/, "");
 
 const STEPS = ["Identity", "Documents", "Reconciliation", "Score", "Decision"] as const;
 
@@ -19,10 +42,11 @@ export default function UnderwriteFlow() {
   const [outlet, setOutlet] = useState("");
   const [city, setCity] = useState("Bengaluru");
 
-  // documents
+  // documents — Bank (required) + Zomato + Swiggy fixed, plus repeatable aggregators
   const [docs, setDocs] = useState<DocRow[]>([
-    { type: "bank_statement", label: "Bank statement (12 mo)", state: "idle" },
-    { type: "zomato_payout", label: "Zomato payout (6 mo)", state: "idle" },
+    { key: "bank", kind: "bank", docType: "bank_statement", label: "Bank statement (12 mo)", state: "idle" },
+    { key: "zomato", kind: "payout", docType: "zomato_payout", label: "Zomato payout (6 mo)", state: "idle" },
+    { key: "swiggy", kind: "payout", docType: "swiggy_payout", label: "Swiggy payout (6 mo)", state: "idle" },
   ]);
 
   // reconciliation
@@ -82,9 +106,32 @@ export default function UnderwriteFlow() {
       const dsRes = await fetch(`/api/docs-status?outlet_name=${encodeURIComponent(outlet.trim())}`);
       const ds = await dsRes.json();
       if (dsRes.ok && ds.has_any) {
-        setExistingDocs(ds.existing.map((e: any) => e.doc_type));
-        setDocs((d) => d.map((r) => ds.existing.some((e: any) => e.doc_type === r.type)
-          ? { ...r, state: "parsed", detail: "already on file" } : r));
+        const existing: string[] = ds.existing.map((e: any) => e.doc_type);
+        setExistingDocs(existing);
+        setDocs((d) => {
+          // mark fixed rows (bank/zomato/swiggy) parsed if on file
+          const rows = d.map((r) =>
+            existing.includes(r.docType) ? { ...r, state: "parsed" as DocState, detail: "already on file" } : r);
+          // rebuild aggregator rows for any parsed payout type beyond the fixed slots
+          const shown = new Set(rows.map((r) => r.docType));
+          for (const dt of existing) {
+            if (shown.has(dt) || dt === "bank_statement" || !dt.endsWith("_payout")) continue;
+            const plat = platformFromDocType(dt);
+            const isOther = !["ondc", "ownly", "magicpin"].includes(plat);
+            rows.push({
+              key: `exist_${dt}`,
+              kind: "aggregator",
+              docType: dt,
+              platform: (isOther ? "other" : plat) as AggPlatform,
+              platformLabel: isOther && plat !== "other" ? plat : undefined,
+              label: "Aggregator payout",
+              state: "parsed",
+              detail: "already on file",
+            });
+            shown.add(dt);
+          }
+          return rows;
+        });
       }
     } catch (e: any) {
       setErr(String(e?.message ?? e));
@@ -94,27 +141,46 @@ export default function UnderwriteFlow() {
     }
   }
 
-  async function uploadDoc(idx: number, file: File) {
+  // ---- aggregator slot helpers ----
+  const addAggregator = () =>
+    setDocs((d) => [
+      ...d,
+      { key: crypto.randomUUID(), kind: "aggregator", docType: "ondc_payout", platform: "ondc",
+        label: "Aggregator payout", state: "idle" },
+    ]);
+  const removeRow = (key: string) => setDocs((d) => d.filter((r) => r.key !== key));
+  const setAggPlatform = (key: string, platform: AggPlatform) =>
+    setDocs((d) => d.map((r) => (r.key === key
+      ? { ...r, platform, docType: platform === "other" ? "other_payout" : `${platform}_payout` }
+      : r)));
+  const setAggLabel = (key: string, platformLabel: string) =>
+    setDocs((d) => d.map((r) => (r.key === key ? { ...r, platformLabel } : r)));
+
+  async function uploadDoc(key: string, file: File) {
     setErr(null);
-    setDocs((d) => d.map((r, i) => (i === idx ? { ...r, state: "uploading" } : r)));
+    const row = docs.find((r) => r.key === key);
+    if (!row) return;
+    setDocs((d) => d.map((r) => (r.key === key ? { ...r, state: "uploading" } : r)));
     try {
       const fd = new FormData();
       fd.append("file", file);
-      fd.append("doc_type", docs[idx].type);
+      fd.append("doc_type", row.kind === "aggregator" ? aggDocType(row) : row.docType);
       fd.append("outlet_name", outlet.trim());
-      setDocs((d) => d.map((r, i) => (i === idx ? { ...r, state: "parsing" } : r)));
+      if (row.kind === "aggregator" && row.platform === "other" && row.platformLabel)
+        fd.append("platform_label", row.platformLabel.trim());
+      setDocs((d) => d.map((r) => (r.key === key ? { ...r, state: "parsing" } : r)));
       const res = await fetch("/api/parse", { method: "POST", body: fd });
       const j = await res.json();
       if (!res.ok || j.manual_fallback) {
-        setDocs((d) => d.map((r, i) => (i === idx ? { ...r, state: "failed", detail: j.detail ?? "parse failed" } : r)));
+        setDocs((d) => d.map((r) => (r.key === key ? { ...r, state: "failed", detail: j.detail ?? "parse failed" } : r)));
         return;
       }
-      const detail = docs[idx].type === "bank_statement"
+      const detail = row.kind === "bank"
         ? `${j.txn_count} txns · ${Math.round((j.confidence ?? 0) * 100)}%`
         : `${j.settlement_count} settlements · ${Math.round((j.confidence ?? 0) * 100)}%`;
-      setDocs((d) => d.map((r, i) => (i === idx ? { ...r, state: "parsed", detail } : r)));
+      setDocs((d) => d.map((r) => (r.key === key ? { ...r, state: "parsed", detail } : r)));
     } catch (e: any) {
-      setDocs((d) => d.map((r, i) => (i === idx ? { ...r, state: "failed", detail: String(e?.message ?? e) } : r)));
+      setDocs((d) => d.map((r) => (r.key === key ? { ...r, state: "failed", detail: String(e?.message ?? e) } : r)));
     }
   }
 
@@ -172,8 +238,10 @@ export default function UnderwriteFlow() {
     return <span className={`rc-badge ${map[p]}`}>{label[p]}</span>;
   };
 
+  // Only the bank statement is required to reconcile; aggregators are optional.
+  const bankParsed = docs.some((d) => d.kind === "bank" && d.state === "parsed");
   const canNext = step === 0 ? outlet.trim().length > 0
-    : step === 1 ? docs.some((d) => d.state === "parsed")
+    : step === 1 ? bankParsed
     : true;
 
   return (
@@ -239,27 +307,58 @@ export default function UnderwriteFlow() {
                 <div className="mt-1 text-[10px] italic" style={{ color: "var(--rc-dim)" }}>Demo Mode — live Google Places feed connects on go-live.</div>
               </div>
             )}
-            {docs.map((d, i) => (
-              <div key={d.type} className="rounded-lg p-4" style={{ border: "1px dashed var(--rc-line)" }}>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-sm font-medium" style={{ color: "var(--rc-fg)" }}>{d.label}</div>
-                    <div className="rc-mono text-xs" style={{ color: d.state === "parsed" ? "var(--rc-lime)" : d.state === "failed" ? "var(--rc-red)" : "var(--rc-dim)" }}>
-                      {d.state === "idle" ? "Not uploaded" : d.state === "uploading" ? "Uploading…" : d.state === "parsing" ? "Parsing… (bank statements take 1–3 min)" : d.state === "parsed" ? `✓ ${d.detail}` : `✗ ${d.detail}`}
+            {docs.map((d) => {
+              const otherNeedsName = d.kind === "aggregator" && d.platform === "other" && !d.platformLabel?.trim();
+              return (
+                <div key={d.key} className="rounded-lg p-4" style={{ border: "1px dashed var(--rc-line)" }}>
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      {d.kind === "aggregator" ? (
+                        <div className="flex flex-wrap items-center gap-2">
+                          <select value={d.platform} onChange={(e) => setAggPlatform(d.key, e.target.value as AggPlatform)}
+                            className="rc-select" style={{ width: "auto", padding: "6px 10px", fontSize: 13 }}>
+                            {AGG_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                          </select>
+                          {d.platform === "other" && (
+                            <input value={d.platformLabel ?? ""} onChange={(e) => setAggLabel(d.key, e.target.value)}
+                              placeholder="Platform name" className="rc-input" style={{ width: 160, padding: "6px 10px", fontSize: 13 }} />
+                          )}
+                          <span className="text-xs" style={{ color: "var(--rc-dim)" }}>payout</span>
+                        </div>
+                      ) : (
+                        <div className="text-sm font-medium" style={{ color: "var(--rc-fg)" }}>{d.label}
+                          {d.kind === "bank" && <span className="ml-1 text-xs" style={{ color: "var(--rc-amber)" }}>· required</span>}
+                        </div>
+                      )}
+                      <div className="rc-mono mt-1 text-xs" style={{ color: d.state === "parsed" ? "var(--rc-lime)" : d.state === "failed" ? "var(--rc-red)" : "var(--rc-dim)" }}>
+                        {d.state === "idle" ? "Not uploaded" : d.state === "uploading" ? "Uploading…" : d.state === "parsing" ? "Parsing… (bank statements take 1–3 min)" : d.state === "parsed" ? `✓ ${d.detail}` : `✗ ${d.detail}`}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <label className="rc-btn cursor-pointer" style={{ width: "auto", padding: "8px 14px", fontSize: 13, opacity: otherNeedsName ? 0.5 : 1 }}>
+                        Choose PDF
+                        <input type="file" accept="application/pdf" className="hidden" disabled={otherNeedsName}
+                          onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadDoc(d.key, f); }} />
+                      </label>
+                      {d.kind === "aggregator" && (
+                        <button onClick={() => removeRow(d.key)} aria-label="Remove aggregator"
+                          className="rc-btn rc-btn-ghost" style={{ width: "auto", padding: "8px 12px", fontSize: 13 }}>✕</button>
+                      )}
                     </div>
                   </div>
-                  <label className="rc-btn cursor-pointer" style={{ width: "auto", padding: "8px 14px", fontSize: 13 }}>
-                    Choose PDF
-                    <input type="file" accept="application/pdf" className="hidden"
-                      onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadDoc(i, f); }} />
-                  </label>
                 </div>
-              </div>
-            ))}
-            <button onClick={runReconcile} disabled={reconBusy || !docs.some((d) => d.state === "parsed")}
+              );
+            })}
+            <button onClick={addAggregator} className="rc-btn rc-btn-ghost" style={{ width: "auto", padding: "8px 14px", fontSize: 13 }}>
+              + Add aggregator
+            </button>
+            <button onClick={runReconcile} disabled={reconBusy || !bankParsed}
               className="rc-btn">
               {reconBusy ? "Reconciling…" : "Reconcile & Continue →"}
             </button>
+            <p className="text-xs" style={{ color: "var(--rc-dim)" }}>
+              Only the bank statement is required. All aggregator payouts are reconciled together against it in one pooled pass.
+            </p>
           </div>
         )}
 
