@@ -283,6 +283,14 @@
 :root[data-theme="light"] .rc-mono[style*="--rc-cyan"],
 :root[data-theme="light"] a { color: #0E8A94; }
 
+/* Solid .rc-btn labels: the global light-mode `a { color:#0E8A94 }` rule above
+   (specificity 0,2,1) beats `.rc-btn`'s own `color:#0E1117` (0,1,0), so anchor
+   buttons render teal-on-teal and vanish in light mode; plain <button> .rc-btn
+   would show near-black on the same dark teal fill. Force white on the accent
+   fill in light mode. Exclude .rc-btn-ghost (transparent fill → keeps its dark
+   var(--rc-fg) text) so ghost/filter buttons stay readable. */
+:root[data-theme="light"] .rc-btn:not(.rc-btn-ghost) { color: #FFFFFF !important; }
+
 /* ============================================================
    MOBILE RESPONSIVE FIX — append to app/rasoi-theme.css
    Fixes: (1) two-column chart/card grids overflowing on phones
