@@ -14,7 +14,7 @@
 //   marketing   : Σ items
 //   setup       : Σ items   (row-sum avoids the workbook's Y2 =SUM(H2:H6) bug)
 //   provision   : blended[y] straight from the workbook (V3 has no editable mix)
-import type { ModelInputs } from "@/lib/model/engine";
+import type { ModelInputs, ModelOutputs } from "@/lib/model/engine";
 import { DEFAULT_INPUTS, WORKBOOK } from "@/lib/model/defaults";
 
 export type Y3 = [number, number, number];
@@ -27,6 +27,14 @@ export interface OperationsState {
   variable: Row[];     // {item, rateLabel, y} — reference breakdown
   offices: Row[];      // {item, y} — reference breakdown
   grandTotal: number[]; // [Y1,Y2,Y3] — editable driver (workbook total)
+}
+
+// Capital allocation of the raise. Display/runway inputs only — these do NOT
+// feed computeModel (disbursal is still driven by cases × ticket).
+export interface Allocation {
+  raise: number;           // total raise (₹)
+  lendingDeposit: number;  // equity base deposited for lending (₹)
+  leverageMultiple: number; // bank leverage on the deposit
 }
 
 export interface ModelState {
@@ -44,6 +52,8 @@ export interface ModelState {
   setup: Row[];
   cities: City[];
   provisioning: Y3; // blended RBI rate per year
+  // ---- Capital allocation (runway view; not fed to the engine) ----
+  allocation: Allocation;
 }
 
 const w: any = WORKBOOK;
@@ -97,6 +107,7 @@ export function makeDefaultState(): ModelState {
     setup: w.setup.items.map((r: any) => ({ item: r.item, y: [...r.y] })),
     cities: w.cities.map((c: any) => ({ city: c.city, loans: [...c.loans] })),
     provisioning: [...w.provisioning.blended] as Y3,
+    allocation: { raise: 600_000_000, lendingDeposit: 300_000_000, leverageMultiple: 5 },
   };
 }
 
@@ -132,6 +143,50 @@ export function deriveInputs(s: ModelState): ModelInputs {
     marketingCost: sumRows(s.marketing),
     setupCost: sumRows(s.setup),
     provisionBlendedRate: s.provisioning,
+  };
+}
+
+// Derived capital-allocation / Year-1 runway report. Pure reporting on top of
+// the engine output — it does NOT change any modelled figure. All ₹.
+export interface CapitalReport {
+  raise: number;
+  lendingDeposit: number;
+  leverageMultiple: number;
+  lendingCapacity: number;   // deposit × multiple (NBFC leverage)
+  cashReserve: number;       // raise − deposit
+  disbursedY1: number;       // Y1 disbursed (for the capacity check)
+  capacityShort: boolean;    // lendingCapacity < Y1 disbursed
+  totalExpenseY1: number;    // all-in accrual: expense + direct cost + set-up
+  cashExpenseY1: number;     // cash-out only (excludes non-cash provision)
+  incomeY1: number;          // Y1 interest + processing fee
+  provisionY1: number;       // Y1 non-cash provision
+  netCashBurnY1: number;     // cash expense − Y1 income
+  cashLeftAfterY1: number;   // cash reserve − net cash burn
+}
+
+export function deriveCapital(inputs: ModelInputs, outputs: ModelOutputs, alloc: Allocation): CapitalReport {
+  const Y1 = outputs.years[0];
+  const setup = inputs.setupCost[0] ?? 0;
+  const lendingCapacity = alloc.lendingDeposit * alloc.leverageMultiple;
+  const cashReserve = alloc.raise - alloc.lendingDeposit;
+  const totalExpenseY1 = Y1.expense + Y1.directCost + setup;
+  const cashExpenseY1 = Y1.costOfCapital + Y1.operationsCost + Y1.techCost + Y1.marketingCost + setup;
+  const netCashBurnY1 = cashExpenseY1 - Y1.totalIncome;
+  const cashLeftAfterY1 = cashReserve - netCashBurnY1;
+  return {
+    raise: alloc.raise,
+    lendingDeposit: alloc.lendingDeposit,
+    leverageMultiple: alloc.leverageMultiple,
+    lendingCapacity,
+    cashReserve,
+    disbursedY1: Y1.disbursedValue,
+    capacityShort: lendingCapacity < Y1.disbursedValue,
+    totalExpenseY1,
+    cashExpenseY1,
+    incomeY1: Y1.totalIncome,
+    provisionY1: Y1.provision,
+    netCashBurnY1,
+    cashLeftAfterY1,
   };
 }
 

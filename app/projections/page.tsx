@@ -18,6 +18,7 @@ import { TechCost, Operations, Marketing, Setup } from "./sections/costs";
 import { PnL } from "./sections/PnL";
 import { Provisioning, Cities } from "./sections/tables";
 import { UnitEconomics } from "./sections/UnitEconomics";
+import { CapitalAllocation } from "./sections/Capital";
 
 const SECTIONS: [string, string][] = [
   ["dashboard", "Dashboard"],
@@ -91,7 +92,7 @@ export default function ProjectionsPage() {
         </nav>
 
         <div style={{ minWidth: 0 }}>
-          <Dashboard outputs={outputs} />
+          <Dashboard state={state} setState={setState} inputs={inputs} outputs={outputs} />
 
           <LoanEngine state={state} setState={setState} outputs={outputs} />
 
@@ -112,7 +113,14 @@ export default function ProjectionsPage() {
   );
 }
 
-function Dashboard({ outputs }: { outputs: ReturnType<typeof computeModel> }) {
+function Dashboard({
+  state, setState, inputs, outputs,
+}: {
+  state: ModelState;
+  setState: React.Dispatch<React.SetStateAction<ModelState>>;
+  inputs: ReturnType<typeof deriveInputs>;
+  outputs: ReturnType<typeof computeModel>;
+}) {
   const [Y1, Y2, Y3] = outputs.years;
   const years = [Y1, Y2, Y3];
 
@@ -134,6 +142,9 @@ function Dashboard({ outputs }: { outputs: ReturnType<typeof computeModel> }) {
 
   return (
     <Section id="dashboard" title="Dashboard" eyebrow="At a glance">
+      {/* Capital allocation — pinned above the KPI strip */}
+      <CapitalAllocation state={state} setState={setState} inputs={inputs} outputs={outputs} />
+
       {/* Breakeven badge */}
       <div
         className="rc-panel"
