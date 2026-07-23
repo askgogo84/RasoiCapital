@@ -1,9 +1,10 @@
 // app/projections/export.ts — export the CURRENT edited model state to .xlsx
-// (SheetJS), one sheet per section, mirroring the workbook's tab names.
+// (SheetJS), one sheet per section, mirroring the V3 workbook's tab names.
 import * as XLSX from "xlsx";
 import type { computeModel, YearPL } from "@/lib/model/engine";
 import type { ModelState } from "./state";
-import { techTotals, opsTotals, sumRows, rolesRunRate, blendedRate } from "./state";
+import { techTotals, opsTotals, sumRows, groupTotals } from "./state";
+import { WORKBOOK } from "@/lib/model/defaults";
 
 const PL_LINES: [string, (y: YearPL) => number][] = [
   ["Disbursed", (y) => y.disbursedValue],
@@ -11,7 +12,6 @@ const PL_LINES: [string, (y: YearPL) => number][] = [
   ["Processing Fee", (y) => y.processingFee],
   ["Total Income", (y) => y.totalIncome],
   ["Cost of Capital", (y) => y.costOfCapital],
-  ["CAC", (y) => y.cac],
   ["Direct Cost", (y) => y.directCost],
   ["Contribution", (y) => y.contribution],
   ["Tech", (y) => y.techCost],
@@ -20,8 +20,9 @@ const PL_LINES: [string, (y: YearPL) => number][] = [
   ["Provision", (y) => y.provision],
   ["Expense", (y) => y.expense],
   ["EBITDA", (y) => y.ebitda],
+  ["EBITDA %", (y) => +(y.ebitdaPct * 100).toFixed(2)],
+  ["AUM (year-end book)", (y) => y.aum],
   ["Set-Up Cost", (y) => y.setupCost],
-  ["EBITDA after Set-Up", (y) => y.ebitdaAfterSetup],
 ];
 
 export function exportModel(state: ModelState, outputs: ReturnType<typeof computeModel>) {
@@ -29,35 +30,38 @@ export function exportModel(state: ModelState, outputs: ReturnType<typeof comput
   const add = (name: string, aoa: (string | number)[][]) =>
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(aoa), name.slice(0, 31));
   const years = outputs.years;
+  const emi = outputs.emiByYear;
 
   // ---- Summary ----
   add("Summary", [
-    ["Rasoi Capital — Financial Model (current session edits)"],
+    ["Rasoi Capital — Financial Model V3 (current session edits)"],
     [],
     ["Metric", "Year 1", "Year 2", "Year 3"],
     ["Disbursed (₹)", ...years.map((y) => y.disbursedValue)],
     ["Loans", ...years.map((y) => y.disbursedCount)],
-    ["Year-end book (₹)", ...years.map((y) => y.yearEndBook)],
+    ["AUM / total book (₹)", ...years.map((y) => y.aum)],
     ["EBITDA (₹)", ...years.map((y) => y.ebitda)],
+    ["EBITDA %", ...years.map((y) => +(y.ebitdaPct * 100).toFixed(2))],
     [],
-    ["EMI (₹)", outputs.emi],
+    ["EMI by ticket year (₹)", ...emi],
   ]);
 
   // ---- Loan Engine ----
   const le: (string | number)[][] = [
+    ["Driver", "Year 1", "Year 2", "Year 3"],
+    ["Avg ticket (₹)", ...state.ticketByYear],
+    ["Cost of capital (p.a.)", ...state.costOfCapitalByYear],
+    ["EMI (₹)", ...emi],
+    [],
     ["Driver", "Value"],
-    ["Avg ticket (₹)", state.ticket],
     ["Interest rate (p.a.)", state.annualRate],
     ["Tenure (months)", state.tenureMonths],
     ["Processing fee", state.processingFeePct],
-    ["Cost of capital (p.a.)", state.costOfCapitalPct],
-    ["CAC", state.cacPct],
-    ["EMI (₹)", outputs.emi],
     [],
-    ["Month", "Cases", "Disbursed", "Interest Income", "Principal Collected", "EMI Collection", "Receivables Book", "Principal Outstanding", "Cost of Capital", "Processing Fee", "Funds Required"],
+    ["Month", "Year", "Cases", "Ticket", "Disbursed", "Interest Income", "Principal Collected", "EMI Collection", "Interest Book", "Principal Book", "Total Book", "Cost of Capital", "Processing Fee"],
   ];
   outputs.monthly.forEach((r) =>
-    le.push([r.month, r.cases, r.disbursed, r.interestIncome, r.principalCollected, r.emiCollection, r.receivablesBook, r.principalOutstanding, r.costOfCapital, r.processingFee, r.fundsRequired]),
+    le.push([r.month, r.year, r.cases, r.ticket, r.disbursed, r.interestIncome, r.principalCollected, r.emiCollection, r.interestBook, r.principalBook, r.totalBook, r.costOfCapital, r.processingFee]),
   );
   add("Loan Engine", le);
 
@@ -70,7 +74,7 @@ export function exportModel(state: ModelState, outputs: ReturnType<typeof comput
 
   // ---- P&L ----
   const pl: (string | number)[][] = [["Line (₹)", "Year 1", "Year 2", "Year 3"]];
-  PL_LINES.forEach(([label, fn]) => pl.push([label, ...years.map((y) => Math.round(fn(y)))]));
+  PL_LINES.forEach(([label, fn]) => pl.push([label, ...years.map((y) => Math.round(fn(y) * 100) / 100)]));
   add("P&L", pl);
 
   // ---- Tech Cost (₹ lakh) ----
@@ -79,19 +83,20 @@ export function exportModel(state: ModelState, outputs: ReturnType<typeof comput
   tech.push(["Total (₹)", ...techTotals(state.tech)]);
   add("Tech Cost", tech);
 
-  // ---- Operations ----
-  const ops: (string | number)[][] = [
-    ["Role", "Rate (₹/yr)", "Heads Y1", "Heads Y2", "Heads Y3", "Run-rate Y1 (₹)", "Run-rate Y2 (₹)", "Run-rate Y3 (₹)"],
-  ];
-  state.operations.roles.forEach((r) =>
-    ops.push([r.role, r.rate, ...r.heads, r.rate * r.heads[0], r.rate * r.heads[1], r.rate * r.heads[2]]),
-  );
+  // ---- Operations (roles / variable / offices breakdown + driver total) ----
+  const ops: (string | number)[][] = [["ROLES (₹)", "Rate (₹/yr)", "Year 1", "Year 2", "Year 3"]];
+  state.operations.roles.forEach((r) => ops.push([r.item, r.rate ?? "", ...r.y]));
+  ops.push(["Roles subtotal", "", ...groupTotals(state.operations.roles)]);
   ops.push([]);
-  ops.push(["Item (₹)", "Year 1", "Year 2", "Year 3"]);
-  ops.push(["Salaries (booked)", ...state.operations.salariesBooked]);
-  state.operations.overheads.forEach((r) => ops.push([r.item, ...r.y]));
-  ops.push(["Operations Total (₹)", ...opsTotals(state.operations)]);
-  ops.push(["Run-rate total (₹)", ...rolesRunRate(state.operations.roles)]);
+  ops.push(["VARIABLE (₹)", "Rate", "Year 1", "Year 2", "Year 3"]);
+  state.operations.variable.forEach((r) => ops.push([r.item, r.rateLabel ?? "", ...r.y]));
+  ops.push(["Variable subtotal", "", ...groupTotals(state.operations.variable)]);
+  ops.push([]);
+  ops.push(["OFFICES (₹)", "", "Year 1", "Year 2", "Year 3"]);
+  state.operations.offices.forEach((r) => ops.push([r.item, "", ...r.y]));
+  ops.push(["Offices subtotal", "", ...groupTotals(state.operations.offices)]);
+  ops.push([]);
+  ops.push(["Operations Total — model driver (₹)", "", ...opsTotals(state.operations)]);
   add("Operations", ops);
 
   // ---- Marketing ----
@@ -107,12 +112,33 @@ export function exportModel(state: ModelState, outputs: ReturnType<typeof comput
   add("Set-Up Cost", setup);
 
   // ---- Provisioning ----
-  const prov: (string | number)[][] = [["Asset Class", "Rate", "Share Y1", "Share Y2", "Share Y3"]];
-  state.provisioning.forEach((m) => prov.push([m.type, m.rate, ...m.share]));
-  prov.push([]);
-  prov.push(["Blended rate", "", ...blendedRate(state.provisioning)]);
-  prov.push(["Provision (₹)", "", ...years.map((y) => y.provision)]);
+  const prov: (string | number)[][] = [["Line", "Year 1", "Year 2", "Year 3"]];
+  prov.push(["Blended rate", ...state.provisioning]);
+  prov.push(["AUM (year-end book) (₹)", ...years.map((y) => y.aum)]);
+  prov.push(["Provision (₹)", ...years.map((y) => y.provision)]);
   add("Provisioning", prov);
 
-  XLSX.writeFile(wb, "Rasoi_Financial_Model.xlsx");
+  // ---- Unit Economics (per-loan margin) ----
+  const ue: any = WORKBOOK.unitEconomics;
+  const uecon: (string | number)[][] = [
+    ["Unit Economics — per loan (% of disbursed)"],
+    [],
+    ["Income", "%"],
+    ["Interest", +(ue.income.interestRate * 100).toFixed(2)],
+    ["Processing Fee", +(ue.income.pf * 100).toFixed(2)],
+    ["Total Income", +(ue.income.total * 100).toFixed(2)],
+    [],
+    ["Direct Cost", "%"],
+    ["Cost of Capital", +(ue.directCost.costOfCapital * 100).toFixed(2)],
+    ["Tech", +(ue.directCost.tech * 100).toFixed(2)],
+    ["Collection", +(ue.directCost.collection * 100).toFixed(2)],
+    ["Opex", +(ue.directCost.opex * 100).toFixed(2)],
+    ["Bad Debts", +(ue.directCost.badDebts * 100).toFixed(2)],
+    ["Total Direct Cost", +(ue.directCost.total * 100).toFixed(2)],
+    [],
+    ["Contribution Margin", +(ue.contributionMargin * 100).toFixed(2)],
+  ];
+  add("Unit Economics", uecon);
+
+  XLSX.writeFile(wb, "Rasoi_Financial_Model_V3.xlsx");
 }

@@ -60,7 +60,7 @@ export default function ProjectionsPage() {
     <div className="rc-page">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 6, flexWrap: "wrap" }}>
         <div>
-          <div className="rc-eyebrow">Investor Model · Loan_Projection_V2</div>
+          <div className="rc-eyebrow">Investor Model · Loan_Projection_V3</div>
           <h1 style={{ fontSize: 24, fontWeight: 700, color: "var(--rc-fg)", marginTop: 4 }}>Financial Projections</h1>
         </div>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
@@ -116,14 +116,14 @@ function Dashboard({ outputs }: { outputs: ReturnType<typeof computeModel> }) {
     m: `M${r.month}`,
     disbursed: r.disbursed,
     collections: r.emiCollection,
-    book: r.receivablesBook,
+    book: r.totalBook,
   }));
 
   const yearRows = years.map((y, i) => ({
     year: `Y${i + 1}`,
     ebitda: y.ebitda,
     income: y.totalIncome,
-    expense: y.costOfCapital + y.cac + y.techCost + y.operationsCost + y.marketingCost + y.provision,
+    expense: y.costOfCapital + y.techCost + y.operationsCost + y.marketingCost + y.provision,
   }));
 
   const ebitdaBreakeven = Y3.ebitda > 0;
@@ -160,8 +160,8 @@ function Dashboard({ outputs }: { outputs: ReturnType<typeof computeModel> }) {
           rows={years.map((y, i) => ({ year: `Y${i + 1}`, value: num(y.disbursedCount) }))}
         />
         <KpiCard
-          label="Year-end Book"
-          rows={years.map((y, i) => ({ year: `Y${i + 1}`, value: inr(y.yearEndBook) }))}
+          label="AUM (Total Book)"
+          rows={years.map((y, i) => ({ year: `Y${i + 1}`, value: inr(y.aum) }))}
         />
         <KpiCard
           label="EBITDA"
@@ -190,7 +190,7 @@ function Dashboard({ outputs }: { outputs: ReturnType<typeof computeModel> }) {
           </ResponsiveContainer>
         </ChartCard>
 
-        <ChartCard title="Receivables Book Growth">
+        <ChartCard title="AUM (Total Book) Growth">
           <ResponsiveContainer width="100%" height={240}>
             <AreaChart data={monthly} margin={{ top: 4, right: 8, left: 4, bottom: 0 }}>
               <defs>

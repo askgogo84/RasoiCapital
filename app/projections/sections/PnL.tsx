@@ -5,17 +5,16 @@ import { useState } from "react";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Cell } from "recharts";
 import type { computeModel } from "@/lib/model/engine";
 import type { YearPL } from "@/lib/model/engine";
-import { inr, crAxis } from "../format";
+import { inr, crAxis, pct } from "../format";
 import { CH, tooltipStyle, tooltipLabelStyle, tooltipItemStyle, Section, ChartCard } from "../ui";
 
 type Kind = "head" | "line" | "sub" | "ebitda";
-const LINES: [string, (y: YearPL) => number, Kind][] = [
+const LINES: [string, (y: YearPL) => number, Kind, ((v: number) => string)?][] = [
   ["Disbursed", (y) => y.disbursedValue, "head"],
   ["Interest Income", (y) => y.interestIncome, "line"],
   ["Processing Fee", (y) => y.processingFee, "line"],
   ["Total Income", (y) => y.totalIncome, "sub"],
   ["Cost of Capital", (y) => y.costOfCapital, "line"],
-  ["CAC", (y) => y.cac, "line"],
   ["Direct Cost", (y) => y.directCost, "sub"],
   ["Contribution", (y) => y.contribution, "sub"],
   ["Tech", (y) => y.techCost, "line"],
@@ -24,6 +23,8 @@ const LINES: [string, (y: YearPL) => number, Kind][] = [
   ["Provision", (y) => y.provision, "line"],
   ["Expense", (y) => y.expense, "sub"],
   ["EBITDA", (y) => y.ebitda, "ebitda"],
+  ["EBITDA %", (y) => y.ebitdaPct, "ebitda", (v) => pct(v, 1)],
+  ["AUM (year-end book)", (y) => y.aum, "line"],
 ];
 
 export function PnL({ outputs }: { outputs: ReturnType<typeof computeModel> }) {
@@ -46,7 +47,7 @@ export function PnL({ outputs }: { outputs: ReturnType<typeof computeModel> }) {
                 </tr>
               </thead>
               <tbody>
-                {LINES.map(([label, fn, kind]) => (
+                {LINES.map(([label, fn, kind, fmt]) => (
                   <tr key={label} className={kind === "sub" || kind === "ebitda" ? "rc-row-sub" : undefined}>
                     <td style={{ color: kind === "head" ? "var(--rc-dim)" : "var(--rc-fg)" }}>{label}</td>
                     {years.map((y, i) => {
@@ -54,7 +55,7 @@ export function PnL({ outputs }: { outputs: ReturnType<typeof computeModel> }) {
                       const tone =
                         kind === "ebitda" ? (v >= 0 ? "var(--rc-lime)" : "var(--rc-red)") : "var(--rc-fg)";
                       return (
-                        <td key={i} className="rc-mono" style={{ color: tone }}>{inr(v)}</td>
+                        <td key={i} className="rc-mono" style={{ color: tone }}>{(fmt ?? inr)(v)}</td>
                       );
                     })}
                   </tr>

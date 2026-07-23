@@ -12,6 +12,36 @@ import { CH, tooltipStyle, tooltipLabelStyle, tooltipItemStyle, Section, ChartCa
 
 type Setter = (fn: (s: ModelState) => ModelState) => void;
 
+// A per-year (Y1/Y2/Y3) row of numeric inputs for a [number,number,number] driver.
+function YearTriple({
+  label, values, onChange, scale = 1, step, dp, unit,
+}: {
+  label: string;
+  values: number[];
+  onChange: (year: number, v: number) => void;
+  scale?: number;
+  step: number;
+  dp: number;
+  unit: string;
+}) {
+  return (
+    <div style={{ marginBottom: 16 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+        <span style={{ fontSize: 13, color: "var(--rc-dim)" }}>{label}</span>
+        <span className="rc-mono" style={{ fontSize: 11, color: "var(--rc-dim)" }}>{unit}</span>
+      </div>
+      <div style={{ display: "flex", gap: 6 }}>
+        {[0, 1, 2].map((y) => (
+          <div key={y} style={{ flex: 1, minWidth: 0 }}>
+            <div className="rc-mono" style={{ fontSize: 10, color: "var(--rc-dim)", marginBottom: 3 }}>Y{y + 1}</div>
+            <NumCell value={values[y]} onChange={(v) => onChange(y, v)} scale={scale} step={step} dp={dp} width={999} />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function LoanEngine({
   state, setState, outputs,
 }: {
@@ -20,6 +50,18 @@ export function LoanEngine({
   outputs: ReturnType<typeof computeModel>;
 }) {
   const set = (k: keyof ModelState) => (v: number) => setState((s) => ({ ...s, [k]: v }));
+  const setTicket = (y: number, v: number) =>
+    setState((s) => {
+      const t = [...s.ticketByYear] as [number, number, number];
+      t[y] = Math.max(0, Math.round(v));
+      return { ...s, ticketByYear: t };
+    });
+  const setCoC = (y: number, v: number) =>
+    setState((s) => {
+      const c = [...s.costOfCapitalByYear] as [number, number, number];
+      c[y] = Math.max(0, v);
+      return { ...s, costOfCapitalByYear: c };
+    });
   const setCase = (idx: number, v: number) =>
     setState((s) => {
       const c = [...s.casesPerMonth];
@@ -39,14 +81,19 @@ export function LoanEngine({
         {/* Drivers */}
         <div className="rc-panel">
           <div className="rc-panel-title">Drivers</div>
-          <DriverInput label="Avg ticket" value={state.ticket} onChange={set("ticket")} min={100000} max={1000000} step={25000} unit="₹" />
+          <YearTriple label="Avg ticket by year" values={state.ticketByYear} onChange={setTicket} scale={1e-5} step={0.5} dp={2} unit="₹ Lakh" />
+          <YearTriple label="Cost of capital by year" values={state.costOfCapitalByYear} onChange={setCoC} scale={100} step={0.25} dp={2} unit="% p.a." />
           <DriverInput label="Interest rate (p.a.)" value={state.annualRate} onChange={set("annualRate")} min={0.12} max={0.30} step={0.005} unit="%" scale={100} />
           <DriverInput label="Tenure" value={state.tenureMonths} onChange={(v) => setState((s) => ({ ...s, tenureMonths: Math.max(1, Math.round(v)) }))} min={6} max={36} step={1} unit="mo" dp={0} />
           <DriverInput label="Processing fee" value={state.processingFeePct} onChange={set("processingFeePct")} min={0} max={0.05} step={0.0025} unit="%" scale={100} />
-          <DriverInput label="Cost of capital (p.a.)" value={state.costOfCapitalPct} onChange={set("costOfCapitalPct")} min={0.06} max={0.18} step={0.005} unit="%" scale={100} />
-          <DriverInput label="CAC" value={state.cacPct} onChange={set("cacPct")} min={0} max={0.05} step={0.0025} unit="%" scale={100} />
-          <div className="rc-mono" style={{ fontSize: 11, color: "var(--rc-dim)", marginTop: 6 }}>
-            EMI @ current terms: <span style={{ color: "var(--rc-cyan)" }}>{inr(outputs.emi)}</span>
+          <div className="rc-mono" style={{ fontSize: 11, color: "var(--rc-dim)", marginTop: 6, lineHeight: 1.7 }}>
+            EMI @ current terms:{" "}
+            {outputs.emiByYear.map((e, i) => (
+              <span key={i}>
+                {i > 0 && <span style={{ color: "var(--rc-dim)" }}> · </span>}
+                Y{i + 1} <span style={{ color: "var(--rc-cyan)" }}>{inr(e)}</span>
+              </span>
+            ))}
           </div>
         </div>
 

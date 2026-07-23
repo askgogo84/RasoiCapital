@@ -4,7 +4,7 @@
 "use client";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Cell } from "recharts";
 import type { ModelState, Row } from "../state";
-import { sumRows, opsTotals, rolesRunRate, techTotals } from "../state";
+import { sumRows, opsTotals, groupTotals, techTotals } from "../state";
 import { inr, crAxis, num } from "../format";
 import { CH, tooltipStyle, tooltipLabelStyle, tooltipItemStyle, Section, ChartCard, MoneyTable, NumCell } from "../ui";
 
@@ -108,101 +108,89 @@ export function Setup({ state, setState }: { state: ModelState; setState: Setter
   );
 }
 
+// One read-only reference sub-table for an operations group (roles / variable /
+// offices). Shows ₹ figures per year; roles also carry a ₹L rate, variable a
+// rate label. These are the workbook breakdown — they do not drive the model.
+function OpsGroup({ title, rows, rateCol }: { title: string; rows: Row[]; rateCol?: "lakh" | "label" }) {
+  const totals = groupTotals(rows);
+  return (
+    <>
+      <div className="rc-panel-title" style={{ marginTop: 6 }}>{title}</div>
+      <div className="rc-table-scroll">
+        <table className="rc-mtable">
+          <thead>
+            <tr>
+              <th>Item</th>
+              {rateCol && <th>Rate</th>}
+              <th>Year 1</th>
+              <th>Year 2</th>
+              <th>Year 3</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r, i) => (
+              <tr key={i}>
+                <td>{r.item}</td>
+                {rateCol === "lakh" && <td className="rc-mono" style={{ color: "var(--rc-dim)" }}>₹{((r.rate ?? 0) / 1e5).toFixed(1)}L</td>}
+                {rateCol === "label" && <td className="rc-mono" style={{ color: "var(--rc-dim)", fontSize: 11 }}>{r.rateLabel || "—"}</td>}
+                {[0, 1, 2].map((y) => (
+                  <td key={y} className="rc-mono">{inr(r.y[y] ?? 0)}</td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+          <tfoot>
+            <tr>
+              <td>{title} subtotal</td>
+              {rateCol && <td />}
+              {totals.map((t, y) => (
+                <td key={y} className="rc-mono" style={{ color: "var(--rc-dim)" }}>{inr(t)}</td>
+              ))}
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </>
+  );
+}
+
 export function Operations({ state, setState }: { state: ModelState; setState: Setter }) {
   const op = state.operations;
-  const totals = opsTotals(op);
-  const runRate = rolesRunRate(op.roles);
+  const totals = opsTotals(op); // the model driver = workbook grand total
 
-  const editRole = (i: number, field: "rate" | "heads", y: number, v: number) =>
+  const editTotal = (y: number, v: number) =>
     setState((s) => {
-      const roles = s.operations.roles.map((r) => ({ ...r, heads: [...r.heads] }));
-      if (field === "rate") roles[i].rate = v;
-      else roles[i].heads[y] = Math.max(0, Math.round(v));
-      return { ...s, operations: { ...s.operations, roles } };
+      const grandTotal = [...s.operations.grandTotal];
+      grandTotal[y] = Math.max(0, v);
+      return { ...s, operations: { ...s.operations, grandTotal } };
     });
-  const editOverhead = (i: number, y: number, base: number) =>
-    setState((s) => {
-      const overheads = s.operations.overheads.map((r) => ({ ...r, y: [...r.y] }));
-      overheads[i].y[y] = base;
-      return { ...s, operations: { ...s.operations, overheads } };
-    });
-  const editSalary = (y: number, base: number) =>
-    setState((s) => {
-      const salariesBooked = [...s.operations.salariesBooked];
-      salariesBooked[y] = base;
-      return { ...s, operations: { ...s.operations, salariesBooked } };
-    });
-  const applyRunRate = () =>
-    setState((s) => ({ ...s, operations: { ...s.operations, salariesBooked: rolesRunRate(s.operations.roles) } }));
 
   return (
-    <Section id="operations" title="Operations" eyebrow="Headcount & overheads">
+    <Section id="operations" title="Operations" eyebrow="Headcount, variable & offices">
       <div className="rc-grid-sidebar-charts" style={{ alignItems: "start", marginBottom: 18 }}>
         <div className="rc-panel">
-          {/* Roles */}
-          <div className="rc-panel-title">Headcount Plan (year-end heads · run-rate reference)</div>
-          <div className="rc-table-scroll">
-            <table className="rc-mtable">
-              <thead>
-                <tr>
-                  <th>Role</th>
-                  <th>Rate ₹L</th>
-                  <th>H1</th>
-                  <th>H2</th>
-                  <th>H3</th>
-                </tr>
-              </thead>
-              <tbody>
-                {op.roles.map((r, i) => (
-                  <tr key={i}>
-                    <td>{r.role}</td>
-                    <td><NumCell value={r.rate} onChange={(v) => editRole(i, "rate", 0, v)} scale={1e-5} step={1} dp={2} width={72} /></td>
-                    {[0, 1, 2].map((y) => (
-                      <td key={y}><NumCell value={r.heads[y]} onChange={(v) => editRole(i, "heads", y, v)} step={1} dp={0} width={56} /></td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-              <tfoot>
-                <tr>
-                  <td>Run-rate (₹/yr)</td>
-                  <td className="rc-mono" style={{ color: "var(--rc-dim)" }} />
-                  {runRate.map((t, y) => (
-                    <td key={y} className="rc-mono" style={{ color: "var(--rc-amber)" }}>{inr(t)}</td>
-                  ))}
-                </tr>
-              </tfoot>
-            </table>
-          </div>
+          <OpsGroup title="Roles (salaries)" rows={op.roles} rateCol="lakh" />
+          <OpsGroup title="Variable costs" rows={op.variable} rateCol="label" />
+          <OpsGroup title="Offices" rows={op.offices} />
 
-          {/* Booked salaries + overheads */}
-          <div className="rc-panel-title" style={{ marginTop: 22 }}>Salaries Booked &amp; Overheads (₹ Lakh)</div>
+          {/* Editable model driver: the workbook's authoritative operations total. */}
+          <div className="rc-panel-title" style={{ marginTop: 22 }}>Operations Total — model driver (₹/yr)</div>
           <div className="rc-table-scroll">
             <table className="rc-mtable">
               <thead>
-                <tr>
-                  <th>Item</th><th>Year 1 ₹L</th><th>Year 2 ₹L</th><th>Year 3 ₹L</th>
-                </tr>
+                <tr><th>Line</th><th>Year 1</th><th>Year 2</th><th>Year 3</th></tr>
               </thead>
               <tbody>
                 <tr className="rc-row-sub">
-                  <td>Salaries (booked)</td>
+                  <td>Operations Total (₹L)</td>
                   {[0, 1, 2].map((y) => (
-                    <td key={y}><NumCell value={op.salariesBooked[y]} onChange={(v) => editSalary(y, v)} scale={1e-5} step={1} dp={2} width={88} /></td>
+                    <td key={y}><NumCell value={op.grandTotal[y]} onChange={(v) => editTotal(y, v)} scale={1e-5} step={1} dp={2} width={96} /></td>
                   ))}
                 </tr>
-                {op.overheads.map((r, i) => (
-                  <tr key={i}>
-                    <td>{r.item}</td>
-                    {[0, 1, 2].map((y) => (
-                      <td key={y}><NumCell value={r.y[y]} onChange={(v) => editOverhead(i, y, v)} scale={1e-5} step={1} dp={2} width={88} /></td>
-                    ))}
-                  </tr>
-                ))}
               </tbody>
               <tfoot>
                 <tr>
-                  <td>Operations Total</td>
+                  <td>Operations Total (₹)</td>
                   {totals.map((t, y) => (
                     <td key={y} className="rc-mono" style={{ color: "var(--rc-cyan)" }}>{inr(t)}</td>
                   ))}
@@ -210,14 +198,11 @@ export function Operations({ state, setState }: { state: ModelState; setState: S
               </tfoot>
             </table>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 12, flexWrap: "wrap" }}>
-            <button className="rc-btn rc-btn-ghost" style={{ width: "auto", padding: "8px 14px", fontSize: 13 }} onClick={applyRunRate}>
-              Set booked salaries = run-rate
-            </button>
-            <span style={{ fontSize: 11, color: "var(--rc-dim)" }}>
-              Booked salary ramps below the year-end run-rate; both are editable.
-            </span>
-          </div>
+          <p style={{ fontSize: 11, color: "var(--rc-dim)", marginTop: 10 }}>
+            The three groups above are the workbook breakdown (reference). The model is driven by the
+            workbook&apos;s authoritative Operations Total — the Y1 total sits below the group sum
+            because the Director draw is excluded from Y1 in the workbook. Edit the total to flex operations spend.
+          </p>
         </div>
 
         <TotalBar totals={totals} title="Operations Total by Year" />

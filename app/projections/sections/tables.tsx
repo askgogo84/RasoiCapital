@@ -4,8 +4,7 @@
 "use client";
 import type { computeModel } from "@/lib/model/engine";
 import type { ModelState } from "../state";
-import { blendedRate } from "../state";
-import { inr, num, pct } from "../format";
+import { inr, num } from "../format";
 import { Section, NumCell } from "../ui";
 
 type Setter = (fn: (s: ModelState) => ModelState) => void;
@@ -28,69 +27,48 @@ export function Provisioning({
   setState: Setter;
   outputs: ReturnType<typeof computeModel>;
 }) {
-  const mix = state.provisioning;
-  const blended = blendedRate(mix);
-  const shareSum = [0, 1, 2].map((y) => mix.reduce((s, m) => s + (m.share[y] ?? 0), 0));
+  const blended = state.provisioning;
   const provision = outputs.years.map((y) => y.provision);
-  const badShare = shareSum.some((s) => Math.abs(s - 1) > 0.0005);
+  const aum = outputs.years.map((y) => y.aum);
 
-  const editRate = (i: number, v: number) =>
+  const editRate = (y: number, v: number) =>
     setState((s) => {
-      const p = s.provisioning.map((m) => ({ ...m, share: [...m.share] }));
-      p[i].rate = v;
-      return { ...s, provisioning: p };
-    });
-  const editShare = (i: number, y: number, v: number) =>
-    setState((s) => {
-      const p = s.provisioning.map((m) => ({ ...m, share: [...m.share] }));
-      p[i].share[y] = v;
+      const p = [...s.provisioning] as [number, number, number];
+      p[y] = Math.max(0, v);
       return { ...s, provisioning: p };
     });
 
   return (
     <Section id="provisioning" title="Bad-Debt Provisioning" eyebrow="RBI norms">
       <div className="rc-panel">
-        <div className="rc-panel-title">Book Mix &amp; Provisioning Rates</div>
+        <div className="rc-panel-title">Blended Provisioning Rate</div>
         <div className="rc-table-scroll">
           <table className="rc-mtable">
             <thead>
               <tr>
-                <th>Asset Class</th>
-                <th>Rate %</th>
-                <th>Share Y1 %</th>
-                <th>Share Y2 %</th>
-                <th>Share Y3 %</th>
+                <th>Line</th>
+                <th>Year 1</th>
+                <th>Year 2</th>
+                <th>Year 3</th>
               </tr>
             </thead>
             <tbody>
-              {mix.map((m, i) => (
-                <tr key={i}>
-                  <td>{m.type}</td>
-                  <td><NumCell value={m.rate} onChange={(v) => editRate(i, v)} scale={100} step={0.05} dp={2} width={70} /></td>
-                  {[0, 1, 2].map((y) => (
-                    <td key={y}><NumCell value={m.share[y]} onChange={(v) => editShare(i, y, v)} scale={100} step={1} dp={1} width={70} /></td>
-                  ))}
-                </tr>
-              ))}
+              <tr className="rc-row-sub">
+                <td>Blended rate %</td>
+                {[0, 1, 2].map((y) => (
+                  <td key={y}><NumCell value={blended[y]} onChange={(v) => editRate(y, v)} scale={100} step={0.05} dp={3} width={80} /></td>
+                ))}
+              </tr>
+              <tr>
+                <td>AUM (year-end book)</td>
+                {aum.map((a, y) => (
+                  <td key={y} className="rc-mono" style={{ color: "var(--rc-dim)" }}>{inr(a)}</td>
+                ))}
+              </tr>
             </tbody>
             <tfoot>
               <tr>
-                <td>Share total</td>
-                <td />
-                {shareSum.map((s, y) => (
-                  <td key={y} className="rc-mono" style={{ color: Math.abs(s - 1) > 0.0005 ? "var(--rc-amber)" : "var(--rc-dim)" }}>{pct(s, 1)}</td>
-                ))}
-              </tr>
-              <tr>
-                <td>Blended rate</td>
-                <td />
-                {blended.map((b, y) => (
-                  <td key={y} className="rc-mono" style={{ color: "var(--rc-cyan)" }}>{pct(b, 3)}</td>
-                ))}
-              </tr>
-              <tr>
                 <td>Provision (₹)</td>
-                <td />
                 {provision.map((p, y) => (
                   <td key={y} className="rc-mono" style={{ color: "var(--rc-fg)" }}>{inr(p)}</td>
                 ))}
@@ -99,9 +77,9 @@ export function Provisioning({
           </table>
         </div>
         <p style={{ fontSize: 11, color: "var(--rc-dim)", marginTop: 10 }}>
-          Provision = year-end receivables book × blended rate. Rates follow RBI provisioning norms (standard / sub-standard / doubtful &amp; loss), as in the workbook.
+          Provision = year-end total book (AUM) × blended rate. The blended rate follows RBI provisioning
+          norms (standard / sub-standard / doubtful &amp; loss) as computed in the workbook; edit it to stress the book.
         </p>
-        {badShare && <Warn>Book-mix shares don&apos;t sum to 100% in every year — the blended rate still computes, but check the allocation.</Warn>}
       </div>
     </Section>
   );
