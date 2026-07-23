@@ -3,8 +3,7 @@
 import * as XLSX from "xlsx";
 import type { computeModel, YearPL } from "@/lib/model/engine";
 import type { ModelState } from "./state";
-import { techTotals, opsTotals, sumRows, groupTotals, deriveInputs, deriveCapital } from "./state";
-import { WORKBOOK } from "@/lib/model/defaults";
+import { techTotals, opsTotals, sumRows, groupTotals, deriveInputs, deriveCapital, deriveUnitEconomics } from "./state";
 
 const cr = (v: number) => +(v / 1e7).toFixed(2); // ₹ → ₹ Cr (2dp)
 
@@ -143,27 +142,28 @@ export function exportModel(state: ModelState, outputs: ReturnType<typeof comput
   prov.push(["Provision (₹)", ...years.map((y) => y.provision)]);
   add("Provisioning", prov);
 
-  // ---- Unit Economics (per-loan margin) ----
-  const ue: any = WORKBOOK.unitEconomics;
-  const uecon: (string | number)[][] = [
-    ["Unit Economics — per loan (% of disbursed)"],
+  // ---- Unit Economics (per-loan margin, live by disbursal year) ----
+  const uec = deriveUnitEconomics(deriveInputs(state));
+  const p2 = (v: number) => +(v * 100).toFixed(2);
+  const ur = (label: string, sel: (c: typeof uec.y1) => number, note = "") =>
+    [label, p2(sel(uec.y1)), p2(sel(uec.y2)), p2(sel(uec.y3)), note] as (string | number)[];
+  add("Unit Economics", [
+    ["Unit Economics — per loan (% of disbursed), by disbursal year"],
     [],
-    ["Income", "%"],
-    ["Interest", +(ue.income.interestRate * 100).toFixed(2)],
-    ["Processing Fee", +(ue.income.pf * 100).toFixed(2)],
-    ["Total Income", +(ue.income.total * 100).toFixed(2)],
-    [],
-    ["Direct Cost", "%"],
-    ["Cost of Capital", +(ue.directCost.costOfCapital * 100).toFixed(2)],
-    ["Tech", +(ue.directCost.tech * 100).toFixed(2)],
-    ["Collection", +(ue.directCost.collection * 100).toFixed(2)],
-    ["Opex", +(ue.directCost.opex * 100).toFixed(2)],
-    ["Bad Debts", +(ue.directCost.badDebts * 100).toFixed(2)],
-    ["Total Direct Cost", +(ue.directCost.total * 100).toFixed(2)],
-    [],
-    ["Contribution Margin", +(ue.contributionMargin * 100).toFixed(2)],
-  ];
-  add("Unit Economics", uecon);
+    ["Component", "Year 1 %", "Year 2 %", "Year 3 %", "Source"],
+    ["INCOME", "", "", "", ""],
+    ur("Interest", (c) => c.interest, "live · Loan Engine annualRate"),
+    ur("Processing Fee", (c) => c.pf, "live · Loan Engine processingFeePct"),
+    ur("Total Income", (c) => c.totalIncome),
+    ["DIRECT COST", "", "", "", ""],
+    ur("Cost of Capital", (c) => c.coc, "live · Loan Engine costOfCapitalByYear"),
+    ur("Tech", (c) => c.tech, "assumption (static)"),
+    ur("Collection", (c) => c.collection, "assumption (static)"),
+    ur("Opex", (c) => c.opex, "assumption (static)"),
+    ur("Bad Debts", (c) => c.badDebts, "assumption (static)"),
+    ur("Total Direct Cost", (c) => c.totalDirectCost),
+    ur("Contribution Margin", (c) => c.contributionMargin),
+  ]);
 
   XLSX.writeFile(wb, "Rasoi_Financial_Model_V3.xlsx");
 }

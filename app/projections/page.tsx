@@ -96,7 +96,7 @@ export default function ProjectionsPage() {
 
           <LoanEngine state={state} setState={setState} outputs={outputs} />
 
-          <UnitEconomics />
+          <UnitEconomics inputs={inputs} />
 
           <Cities state={state} setState={setState} />
           <PnL outputs={outputs} />

@@ -190,5 +190,31 @@ export function deriveCapital(inputs: ModelInputs, outputs: ModelOutputs, alloc:
   };
 }
 
+// ---- Unit economics (per-loan margin, by disbursal year) ----
+// Everything is a fraction of the disbursed amount. Interest / PF / Cost of
+// Capital are read LIVE from ModelInputs (so Loan Engine edits flow through);
+// tech / collection / opex / bad-debts are per-loan variable-cost ASSUMPTIONS
+// that are not in the engine and stay sourced from v3_defaults.json.
+export interface UnitEcoCol {
+  interest: number; pf: number; totalIncome: number;
+  coc: number; tech: number; collection: number; opex: number; badDebts: number;
+  totalDirectCost: number; contributionMargin: number;
+}
+export interface UnitEcoReport { y1: UnitEcoCol; y2: UnitEcoCol; y3: UnitEcoCol; }
+
+export function deriveUnitEconomics(inputs: ModelInputs): UnitEcoReport {
+  const dc: any = (WORKBOOK as any).unitEconomics.directCost; // static per-loan assumptions
+  const col = (y: number): UnitEcoCol => {
+    const interest = inputs.annualRate;        // scalar today → flat across years
+    const pf = inputs.processingFeePct;        // scalar today → flat across years
+    const totalIncome = interest + pf;
+    const coc = inputs.costOfCapitalByYear[y] ?? 0; // the per-year, live one
+    const tech = dc.tech, collection = dc.collection, opex = dc.opex, badDebts = dc.badDebts;
+    const totalDirectCost = coc + tech + collection + opex + badDebts;
+    return { interest, pf, totalIncome, coc, tech, collection, opex, badDebts, totalDirectCost, contributionMargin: totalIncome - totalDirectCost };
+  };
+  return { y1: col(0), y2: col(1), y3: col(2) };
+}
+
 const clone = <T,>(x: T): T => JSON.parse(JSON.stringify(x));
 export { clone };

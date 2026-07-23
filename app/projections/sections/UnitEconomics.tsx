@@ -1,99 +1,100 @@
-// app/projections/sections/UnitEconomics.tsx — per-loan margin view from the V3
-// workbook: income (interest + PF) minus direct cost = contribution margin.
-// Read-only; the figures are a fixed unit-economics reference, expressed as a
-// percentage of the disbursed amount.
+// app/projections/sections/UnitEconomics.tsx — per-loan margin view, BY DISBURSAL
+// YEAR (Y1/Y2/Y3 columns). Income (interest + PF) and Cost of Capital are read
+// LIVE from ModelInputs, so Loan Engine edits flow straight through here. Tech /
+// collection / opex / bad-debts are per-loan variable-cost assumptions from the
+// workbook (not in the engine) — marked "assumption" below.
 "use client";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Cell } from "recharts";
-import { WORKBOOK } from "@/lib/model/defaults";
+import type { ModelInputs } from "@/lib/model/engine";
+import { deriveUnitEconomics, type UnitEcoCol } from "../state";
 import { pct } from "../format";
 import { CH, tooltipStyle, tooltipLabelStyle, tooltipItemStyle, Section, ChartCard } from "../ui";
 
-const ue: any = (WORKBOOK as any).unitEconomics;
+type Kind = "head" | "line" | "sub" | "margin";
+// [label, selector, kind, isAssumption]
+const ROWS: [string, (c: UnitEcoCol) => number, Kind, boolean?][] = [
+  ["INCOME", () => NaN, "head"],
+  ["Interest", (c) => c.interest, "line"],
+  ["Processing Fee", (c) => c.pf, "line"],
+  ["Total Income", (c) => c.totalIncome, "sub"],
+  ["DIRECT COST", () => NaN, "head"],
+  ["Cost of Capital", (c) => c.coc, "line"],
+  ["Tech", (c) => c.tech, "line", true],
+  ["Collection", (c) => c.collection, "line", true],
+  ["Opex", (c) => c.opex, "line", true],
+  ["Bad Debts", (c) => c.badDebts, "line", true],
+  ["Total Direct Cost", (c) => c.totalDirectCost, "sub"],
+  ["Contribution Margin", (c) => c.contributionMargin, "margin"],
+];
 
-// One % breakdown table (Income or Direct Cost).
-function Breakdown({ title, lines, total, totalLabel, accent }: {
-  title: string;
-  lines: [string, number][];
-  total: number;
-  totalLabel: string;
-  accent: string;
-}) {
-  return (
-    <div className="rc-table-scroll">
-      <div className="rc-panel-title">{title}</div>
-      <table className="rc-mtable">
-        <thead>
-          <tr><th>Component</th><th>% of loan</th></tr>
-        </thead>
-        <tbody>
-          {lines.map(([label, v]) => (
-            <tr key={label}>
-              <td>{label}</td>
-              <td className="rc-mono">{pct(v, 2)}</td>
-            </tr>
-          ))}
-        </tbody>
-        <tfoot>
-          <tr className="rc-row-sub">
-            <td>{totalLabel}</td>
-            <td className="rc-mono" style={{ color: accent }}>{pct(total, 2)}</td>
-          </tr>
-        </tfoot>
-      </table>
-    </div>
-  );
-}
+export function UnitEconomics({ inputs }: { inputs: ModelInputs }) {
+  const ue = deriveUnitEconomics(inputs);
+  const cols: [string, UnitEcoCol][] = [["Year 1", ue.y1], ["Year 2", ue.y2], ["Year 3", ue.y3]];
 
-export function UnitEconomics() {
+  // tri-color bar reflects Year 1
   const chartData = [
-    { name: "Income", pct: ue.income.total * 100, fill: CH.cyan },
-    { name: "Direct Cost", pct: ue.directCost.total * 100, fill: CH.amber },
-    { name: "Contribution", pct: ue.contributionMargin * 100, fill: CH.lime },
+    { name: "Income", pct: ue.y1.totalIncome * 100, fill: CH.cyan },
+    { name: "Direct Cost", pct: ue.y1.totalDirectCost * 100, fill: CH.amber },
+    { name: "Contribution", pct: ue.y1.contributionMargin * 100, fill: CH.lime },
   ];
 
   return (
-    <Section id="unit-economics" title="Unit Economics" eyebrow="Per-loan margin">
+    <Section id="unit-economics" title="Unit Economics" eyebrow="Per-loan margin by disbursal year">
       <div className="rc-grid-sidebar-charts" style={{ alignItems: "start" }}>
         <div className="rc-panel">
-          <div style={{ display: "grid", gap: 18 }}>
-            <Breakdown
-              title="Income"
-              lines={[
-                ["Interest", ue.income.interestRate],
-                ["Processing Fee", ue.income.pf],
-              ]}
-              total={ue.income.total}
-              totalLabel="Total Income"
-              accent="var(--rc-cyan)"
-            />
-            <Breakdown
-              title="Direct Cost"
-              lines={[
-                ["Cost of Capital", ue.directCost.costOfCapital],
-                ["Tech", ue.directCost.tech],
-                ["Collection", ue.directCost.collection],
-                ["Opex", ue.directCost.opex],
-                ["Bad Debts", ue.directCost.badDebts],
-              ]}
-              total={ue.directCost.total}
-              totalLabel="Total Direct Cost"
-              accent="var(--rc-amber)"
-            />
+          <div className="rc-panel-title">Per loan · % of disbursed</div>
+          <div className="rc-table-scroll">
+            <table className="rc-mtable">
+              <thead>
+                <tr>
+                  <th>Component</th>
+                  {cols.map(([label]) => <th key={label}>{label}</th>)}
+                </tr>
+              </thead>
+              <tbody>
+                {ROWS.map(([label, sel, kind, assumption]) => {
+                  if (kind === "head") {
+                    return (
+                      <tr key={label} className="rc-row-head">
+                        <td colSpan={4}>{label}</td>
+                      </tr>
+                    );
+                  }
+                  const isSub = kind === "sub" || kind === "margin";
+                  const tone =
+                    kind === "margin"
+                      ? "var(--rc-lime)"
+                      : label === "Cost of Capital"
+                      ? "var(--rc-cyan)"
+                      : "var(--rc-fg)";
+                  return (
+                    <tr key={label} className={isSub ? "rc-row-sub" : undefined}>
+                      <td>
+                        {label}
+                        {assumption && (
+                          <span style={{ fontSize: 10, color: "var(--rc-dim)", marginLeft: 6 }}>assumption</span>
+                        )}
+                      </td>
+                      {cols.map(([clabel, c]) => (
+                        <td key={clabel} className="rc-mono" style={{ color: kind === "line" ? tone : tone, fontWeight: isSub ? 700 : 400 }}>
+                          {pct(sel(c), 2)}
+                        </td>
+                      ))}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
-          <div
-            className="rc-panel"
-            style={{ marginTop: 18, display: "flex", justifyContent: "space-between", alignItems: "center", borderLeft: "3px solid var(--rc-lime)", padding: "12px 16px" }}
-          >
-            <span style={{ fontWeight: 700, color: "var(--rc-lime)", fontSize: 15 }}>Contribution Margin</span>
-            <span className="rc-mono" style={{ fontWeight: 700, color: "var(--rc-lime)", fontSize: 18 }}>{pct(ue.contributionMargin, 2)}</span>
-          </div>
-          <p style={{ fontSize: 11, color: "var(--rc-dim)", marginTop: 10 }}>
-            Per-loan economics as a share of the disbursed amount: {pct(ue.income.total, 1)} income −
-            {" "}{pct(ue.directCost.total, 1)} direct cost = {pct(ue.contributionMargin, 1)} contribution margin.
+          <p style={{ fontSize: 11, color: "var(--rc-dim)", marginTop: 10, lineHeight: 1.6 }}>
+            Per-loan economics by disbursal year. Interest, processing fee and cost of capital are read live
+            from the Loan Engine; cost of capital steps down as the book seasons
+            ({pct(ue.y1.coc, 1)} → {pct(ue.y2.coc, 1)} → {pct(ue.y3.coc, 1)}). Tech, collection, opex and bad-debts
+            are fixed per-loan variable-cost assumptions (not driven by the engine).
           </p>
         </div>
 
-        <ChartCard title="Income → Direct Cost → Contribution (% of loan)">
+        <ChartCard title="Income → Direct Cost → Contribution (Year 1 shown)">
           <ResponsiveContainer width="100%" height={240}>
             <BarChart data={chartData} margin={{ top: 4, right: 8, left: 4, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke={CH.line} />
