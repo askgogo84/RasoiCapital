@@ -17,10 +17,12 @@ import { LoanEngine } from "./sections/LoanEngine";
 import { TechCost, Operations, Marketing, Setup } from "./sections/costs";
 import { PnL } from "./sections/PnL";
 import { Provisioning, Cities } from "./sections/tables";
+import { UnitEconomics } from "./sections/UnitEconomics";
 
 const SECTIONS: [string, string][] = [
   ["dashboard", "Dashboard"],
   ["loan-engine", "Loan Engine"],
+  ["unit-economics", "Unit Economics"],
   ["cities", "City Break Up"],
   ["pnl", "P&L"],
   ["tech", "Tech Cost"],
@@ -92,6 +94,8 @@ export default function ProjectionsPage() {
           <Dashboard outputs={outputs} />
 
           <LoanEngine state={state} setState={setState} outputs={outputs} />
+
+          <UnitEconomics />
 
           <Cities state={state} setState={setState} />
           <PnL outputs={outputs} />
