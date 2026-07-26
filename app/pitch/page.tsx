@@ -280,6 +280,8 @@ export default function PitchPage() {
                 <Row k="Weekly EMI (at source)" v={`≈ ₹${weekly.toLocaleString("en-IN")}/wk`} tone={C.violet} />
                 <div style={{fontSize:12, color:C.dim, marginTop:2}}>≈ ₹{daily.toLocaleString("en-IN")}/day of sales — but collected weekly at source from the settlement flow, never debited from the borrower.</div>
                 <div style={{fontSize:12, color:C.cyan, marginTop:4}}>+ Rasoi IQ credit memo: weak factors · path to G</div>
+                <Row k="Collateral" v="Required" />
+                <Row k="PDC" v="Required" />
               </div>;
             })()}
           </div>
@@ -463,30 +465,6 @@ export default function PitchPage() {
             <b style={{color:C.violet, fontSize:15}}>Why this team wins</b>
             <p style={{fontSize:12.5, color:C.dim, marginTop:8, lineHeight:1.55}}>Domain + credit + technology + distribution + operating experience — every leg of a HORECA lending business covered by someone who's actually done it.</p>
           </Card>
-        </div>
-      </Section>
-
-      {/* ——— THE ASK ——— */}
-      <Section id="ask" eyebrow="The ask" title="₹60 Cr — regulation-anchored, loan-deployed.">
-        <div style={{display:"grid", gap:12, marginBottom:20}}>
-          {[
-            ["Lending corpus (on-book AUM seed)","52%","₹14–28 Cr","First ~3,000 loans (₹150 Cr Y1) · Bengaluru → 4 cities · proves the book for debt lines & co-lending",C.lime],
-            ["NBFC NOF + licence / acquisition","27%","₹10–12 Cr","RBI-mandated ₹10 Cr liquid NOF + shell premium — ring-fenced, not burn",C.cyan],
-            ["Technology & AI","8%","₹2.5–4 Cr","FSA mobile app, RL model build-out, bank-statement APIs, LMS hardening",C.violet],
-            ["Field ops & distribution","7%","₹2–3.5 Cr","FSA network in 4 cities, distributor partnerships, collections infra",C.amber],
-            ["Team, compliance & buffer","6%","₹1.5–2.5 Cr","Credit head, compliance officer, ops core + 12-month regulatory runway",C.dim],
-          ].map(([label,pct,amt,desc,tone]:any,i:number)=>(
-            <div key={i} className="rc-panel" style={{display:"flex", alignItems:"center", gap:18, padding:"14px 18px"}}>
-              <div className="rc-mono" style={{fontSize:22, fontWeight:700, color:tone, minWidth:56}}>{pct}</div>
-              <div style={{flex:1}}>
-                <div style={{display:"flex", justifyContent:"space-between", flexWrap:"wrap", gap:8}}><b style={{color:C.fg, fontSize:14}}>{label}</b><span className="rc-mono" style={{color:tone, fontSize:13}}>{amt}</span></div>
-                <p style={{fontSize:12.5, color:C.dim, marginTop:4}}>{desc}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-        <div style={{padding:"16px 20px", background:`${C.lime}14`, border:`1px solid ${C.lime}44`, borderRadius:12, fontSize:15, color:C.fg}}>
-          ≈ <b>80% of the raise</b> sits in regulated capital + loan book — recoverable assets, not operating burn. Equity here buys a regulated institution.
         </div>
       </Section>
 
